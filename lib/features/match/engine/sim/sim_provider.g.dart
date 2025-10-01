@@ -6,7 +6,7 @@ part of 'sim_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$simControllerHash() => r'f575f966c78d143b79f0d1fd89ae7138d1fe823f';
+String _$simControllerHash() => r'078ca886f3352c47c9b0d9d8cc0b6243506dd386';
 
 /// See also [simController].
 @ProviderFor(simController)

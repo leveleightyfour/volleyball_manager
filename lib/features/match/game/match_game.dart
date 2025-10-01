@@ -4,6 +4,7 @@ import 'package:flame/game.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:volleyball_manager/features/match/engine/positions/position_resolver.dart';
 
 import '../../../shared/models/team_style.dart';
 import '../../../shared/models/player_lite.dart';
@@ -23,6 +24,7 @@ import 'services/move_scheduler.dart';
 class MatchGame extends FlameGame with KeyboardEvents {
   MatchGame({
     required this.sim,
+    required this.positionResolver,
     this.playerRadius = 22,
     this.courtPadding = 16.0,
     this.debugOverlayEnabled = false,
@@ -30,6 +32,8 @@ class MatchGame extends FlameGame with KeyboardEvents {
 
   // ----------------- Engine -----------------
   final SimController sim;
+
+  final PositionResolver positionResolver;
 
   // ----------------- Visual params -----------------
   final double playerRadius;
@@ -208,7 +212,7 @@ class MatchGame extends FlameGame with KeyboardEvents {
           if (phase == MatchPhase.reception) {
             _stepSim(const ManualInputs(passOutcome: PassOutcome.perfect));
           } else if (phase == MatchPhase.setting) {
-            _stepSim(const ManualInputs(setOutcome: SetOutcome.quickMB));
+            _stepSim(const ManualInputs(setOutcome: SetOutcome.middle));
           } else if (phase == MatchPhase.attack) {
             _stepSim(const ManualInputs(attackOutcome: AttackOutcome.kill));
           } else if (phase == MatchPhase.preServe) {
@@ -262,7 +266,7 @@ class MatchGame extends FlameGame with KeyboardEvents {
     final off = side == TeamSide.home
         ? _homeOffset(_rotationTick)
         : _awayOffset(_rotationTick);
-    final order = _rotated(start, off); // [Z1,Z6,Z5,Z4,Z3,Z2]
+    final order = _rotated(start, off);
     return {
       1: order[0],
       6: order[1],

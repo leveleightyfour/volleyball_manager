@@ -212,7 +212,7 @@ class MatchGame extends FlameGame with KeyboardEvents {
           if (phase == MatchPhase.reception) {
             _stepSim(const ManualInputs(passOutcome: PassOutcome.perfect));
           } else if (phase == MatchPhase.setting) {
-            _stepSim(const ManualInputs(setOutcome: SetOutcome.quickMB));
+            _stepSim(const ManualInputs(setOutcome: SetOutcome.middle));
           } else if (phase == MatchPhase.attack) {
             _stepSim(const ManualInputs(attackOutcome: AttackOutcome.kill));
           } else if (phase == MatchPhase.preServe) {

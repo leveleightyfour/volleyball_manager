@@ -21,7 +21,7 @@ class VolleyballManagerApp extends StatelessWidget {
     return MaterialApp(
       title: 'Volleyball Manager',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
         useMaterial3: true,
       ),
       home: const MatchPage(),

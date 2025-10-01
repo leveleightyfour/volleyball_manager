@@ -1,7 +1,17 @@
-enum ServeOutcome { ace, inPlay, fault }
+enum ServeOutcome { inPlay, fault }
 
-enum PassOutcome { perfect, medium, overpass, shank }
+enum PassOutcome { perfect, average, singleOption, overpass, shank }
 
-enum SetOutcome { quickMB, highOH, backOPP, pipe, dump, brokenPlay }
+enum SetOutcome { middle, outside, backrow, pipe, tip }
+
+enum AttackDirection {
+  lineDefense,
+  crossDefence,
+  leftBlock,
+  rightBlock,
+  noBlock,
+  middleBlock,
+  seam,
+}
 
 enum AttackOutcome { kill, blocked, dug, error }

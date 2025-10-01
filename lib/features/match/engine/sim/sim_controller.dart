@@ -38,19 +38,10 @@ class SimController {
         final so = manual.serveOutcome;
         if (so == null) return (state: s, events: events);
 
-        if (so == ServeOutcome.ace) {
-          final newScore = _addPoint(s.score, s.serverSide);
-          events.add(
-            EngineEvent.scoreChanged(home: newScore.home, away: newScore.away),
-          );
-          events.add(
-            EngineEvent.rallyEnded(pointTo: s.serverSide, rallyId: s.rallyId),
-          );
-          s = s.copyWith(score: newScore, phase: MatchPhase.rallyEnd);
-        } else if (so == ServeOutcome.fault) {
+        if (so == ServeOutcome.fault) {
           final receiver = _other(s.serverSide);
           final newScore = _addPoint(s.score, receiver);
-          final nextTick = s.rotationTick + 1; // sideout rotation
+          final nextTick = s.rotationTick + 1;
           final nextServer = receiver;
           events.add(
             EngineEvent.scoreChanged(home: newScore.home, away: newScore.away),
@@ -71,7 +62,6 @@ class SimController {
             phase: MatchPhase.rallyEnd,
           );
         } else {
-          // inPlay → receiving team has possession (they'll attack)
           _possession = _other(s.serverSide);
           events.add(
             EngineEvent.phaseChanged(
