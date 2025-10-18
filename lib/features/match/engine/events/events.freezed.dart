@@ -414,7 +414,6 @@ class _$PlayerMoveImpl implements PlayerMove {
 
   @override
   final int playerId;
-  // reserved for future granular moves
   @override
   final double toX;
   @override
@@ -569,7 +568,7 @@ abstract class PlayerMove implements EngineEvent {
   factory PlayerMove.fromJson(Map<String, dynamic> json) =
       _$PlayerMoveImpl.fromJson;
 
-  int get playerId; // reserved for future granular moves
+  int get playerId;
   double get toX;
   double get toY;
   double get durationSec;

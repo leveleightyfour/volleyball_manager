@@ -11,7 +11,6 @@ _$PlayerLiteImpl _$$PlayerLiteImplFromJson(Map<String, dynamic> json) =>
       id: (json['id'] as num).toInt(),
       number: (json['number'] as num).toInt(),
       role: $enumDecode(_$RoleEnumMap, json['role']),
-      isLibero: json['isLibero'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$PlayerLiteImplToJson(_$PlayerLiteImpl instance) =>
@@ -19,7 +18,6 @@ Map<String, dynamic> _$$PlayerLiteImplToJson(_$PlayerLiteImpl instance) =>
       'id': instance.id,
       'number': instance.number,
       'role': _$RoleEnumMap[instance.role]!,
-      'isLibero': instance.isLibero,
     };
 
 const _$RoleEnumMap = {

@@ -189,10 +189,7 @@ mixin _$MatchState {
   TeamSide get serverSide =>
       throw _privateConstructorUsedError; // current server’s team
   Score get score => throw _privateConstructorUsedError;
-  MatchPhase get phase =>
-      throw _privateConstructorUsedError; // optional metadata for UI/telemetry
-  String? get serverPlayerId => throw _privateConstructorUsedError;
-  String? get receiverPlayerId => throw _privateConstructorUsedError;
+  MatchPhase get phase => throw _privateConstructorUsedError;
 
   /// Serializes this MatchState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -217,8 +214,6 @@ abstract class $MatchStateCopyWith<$Res> {
     TeamSide serverSide,
     Score score,
     MatchPhase phase,
-    String? serverPlayerId,
-    String? receiverPlayerId,
   });
 
   $ScoreCopyWith<$Res> get score;
@@ -244,8 +239,6 @@ class _$MatchStateCopyWithImpl<$Res, $Val extends MatchState>
     Object? serverSide = null,
     Object? score = null,
     Object? phase = null,
-    Object? serverPlayerId = freezed,
-    Object? receiverPlayerId = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -269,14 +262,6 @@ class _$MatchStateCopyWithImpl<$Res, $Val extends MatchState>
                 ? _value.phase
                 : phase // ignore: cast_nullable_to_non_nullable
                       as MatchPhase,
-            serverPlayerId: freezed == serverPlayerId
-                ? _value.serverPlayerId
-                : serverPlayerId // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            receiverPlayerId: freezed == receiverPlayerId
-                ? _value.receiverPlayerId
-                : receiverPlayerId // ignore: cast_nullable_to_non_nullable
-                      as String?,
           )
           as $Val,
     );
@@ -308,8 +293,6 @@ abstract class _$$MatchStateImplCopyWith<$Res>
     TeamSide serverSide,
     Score score,
     MatchPhase phase,
-    String? serverPlayerId,
-    String? receiverPlayerId,
   });
 
   @override
@@ -335,8 +318,6 @@ class __$$MatchStateImplCopyWithImpl<$Res>
     Object? serverSide = null,
     Object? score = null,
     Object? phase = null,
-    Object? serverPlayerId = freezed,
-    Object? receiverPlayerId = freezed,
   }) {
     return _then(
       _$MatchStateImpl(
@@ -360,14 +341,6 @@ class __$$MatchStateImplCopyWithImpl<$Res>
             ? _value.phase
             : phase // ignore: cast_nullable_to_non_nullable
                   as MatchPhase,
-        serverPlayerId: freezed == serverPlayerId
-            ? _value.serverPlayerId
-            : serverPlayerId // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        receiverPlayerId: freezed == receiverPlayerId
-            ? _value.receiverPlayerId
-            : receiverPlayerId // ignore: cast_nullable_to_non_nullable
-                  as String?,
       ),
     );
   }
@@ -382,8 +355,6 @@ class _$MatchStateImpl implements _MatchState {
     required this.serverSide,
     required this.score,
     required this.phase,
-    this.serverPlayerId = null,
-    this.receiverPlayerId = null,
   });
 
   factory _$MatchStateImpl.fromJson(Map<String, dynamic> json) =>
@@ -401,17 +372,10 @@ class _$MatchStateImpl implements _MatchState {
   final Score score;
   @override
   final MatchPhase phase;
-  // optional metadata for UI/telemetry
-  @override
-  @JsonKey()
-  final String? serverPlayerId;
-  @override
-  @JsonKey()
-  final String? receiverPlayerId;
 
   @override
   String toString() {
-    return 'MatchState(rallyId: $rallyId, rotationTick: $rotationTick, serverSide: $serverSide, score: $score, phase: $phase, serverPlayerId: $serverPlayerId, receiverPlayerId: $receiverPlayerId)';
+    return 'MatchState(rallyId: $rallyId, rotationTick: $rotationTick, serverSide: $serverSide, score: $score, phase: $phase)';
   }
 
   @override
@@ -425,25 +389,13 @@ class _$MatchStateImpl implements _MatchState {
             (identical(other.serverSide, serverSide) ||
                 other.serverSide == serverSide) &&
             (identical(other.score, score) || other.score == score) &&
-            (identical(other.phase, phase) || other.phase == phase) &&
-            (identical(other.serverPlayerId, serverPlayerId) ||
-                other.serverPlayerId == serverPlayerId) &&
-            (identical(other.receiverPlayerId, receiverPlayerId) ||
-                other.receiverPlayerId == receiverPlayerId));
+            (identical(other.phase, phase) || other.phase == phase));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    rallyId,
-    rotationTick,
-    serverSide,
-    score,
-    phase,
-    serverPlayerId,
-    receiverPlayerId,
-  );
+  int get hashCode =>
+      Object.hash(runtimeType, rallyId, rotationTick, serverSide, score, phase);
 
   /// Create a copy of MatchState
   /// with the given fields replaced by the non-null parameter values.
@@ -466,8 +418,6 @@ abstract class _MatchState implements MatchState {
     required final TeamSide serverSide,
     required final Score score,
     required final MatchPhase phase,
-    final String? serverPlayerId,
-    final String? receiverPlayerId,
   }) = _$MatchStateImpl;
 
   factory _MatchState.fromJson(Map<String, dynamic> json) =
@@ -482,11 +432,7 @@ abstract class _MatchState implements MatchState {
   @override
   Score get score;
   @override
-  MatchPhase get phase; // optional metadata for UI/telemetry
-  @override
-  String? get serverPlayerId;
-  @override
-  String? get receiverPlayerId;
+  MatchPhase get phase;
 
   /// Create a copy of MatchState
   /// with the given fields replaced by the non-null parameter values.

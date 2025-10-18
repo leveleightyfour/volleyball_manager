@@ -21,8 +21,6 @@ _$MatchStateImpl _$$MatchStateImplFromJson(Map<String, dynamic> json) =>
       serverSide: $enumDecode(_$TeamSideEnumMap, json['serverSide']),
       score: Score.fromJson(json['score'] as Map<String, dynamic>),
       phase: $enumDecode(_$MatchPhaseEnumMap, json['phase']),
-      serverPlayerId: json['serverPlayerId'] as String? ?? null,
-      receiverPlayerId: json['receiverPlayerId'] as String? ?? null,
     );
 
 Map<String, dynamic> _$$MatchStateImplToJson(_$MatchStateImpl instance) =>
@@ -32,8 +30,6 @@ Map<String, dynamic> _$$MatchStateImplToJson(_$MatchStateImpl instance) =>
       'serverSide': _$TeamSideEnumMap[instance.serverSide]!,
       'score': instance.score,
       'phase': _$MatchPhaseEnumMap[instance.phase]!,
-      'serverPlayerId': instance.serverPlayerId,
-      'receiverPlayerId': instance.receiverPlayerId,
     };
 
 const _$TeamSideEnumMap = {TeamSide.home: 'home', TeamSide.away: 'away'};

@@ -29,9 +29,6 @@ class MatchState with _$MatchState {
     required TeamSide serverSide, // current server’s team
     required Score score,
     required MatchPhase phase,
-    // optional metadata for UI/telemetry
-    @Default(null) String? serverPlayerId,
-    @Default(null) String? receiverPlayerId,
   }) = _MatchState;
 
   factory MatchState.initial({TeamSide firstServer = TeamSide.home}) =>

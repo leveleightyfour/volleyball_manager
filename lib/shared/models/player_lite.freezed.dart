@@ -24,7 +24,6 @@ mixin _$PlayerLite {
   int get id => throw _privateConstructorUsedError;
   int get number => throw _privateConstructorUsedError;
   Role get role => throw _privateConstructorUsedError;
-  bool get isLibero => throw _privateConstructorUsedError;
 
   /// Serializes this PlayerLite to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -43,7 +42,7 @@ abstract class $PlayerLiteCopyWith<$Res> {
     $Res Function(PlayerLite) then,
   ) = _$PlayerLiteCopyWithImpl<$Res, PlayerLite>;
   @useResult
-  $Res call({int id, int number, Role role, bool isLibero});
+  $Res call({int id, int number, Role role});
 }
 
 /// @nodoc
@@ -60,12 +59,7 @@ class _$PlayerLiteCopyWithImpl<$Res, $Val extends PlayerLite>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? id = null,
-    Object? number = null,
-    Object? role = null,
-    Object? isLibero = null,
-  }) {
+  $Res call({Object? id = null, Object? number = null, Object? role = null}) {
     return _then(
       _value.copyWith(
             id: null == id
@@ -80,10 +74,6 @@ class _$PlayerLiteCopyWithImpl<$Res, $Val extends PlayerLite>
                 ? _value.role
                 : role // ignore: cast_nullable_to_non_nullable
                       as Role,
-            isLibero: null == isLibero
-                ? _value.isLibero
-                : isLibero // ignore: cast_nullable_to_non_nullable
-                      as bool,
           )
           as $Val,
     );
@@ -99,7 +89,7 @@ abstract class _$$PlayerLiteImplCopyWith<$Res>
   ) = __$$PlayerLiteImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int id, int number, Role role, bool isLibero});
+  $Res call({int id, int number, Role role});
 }
 
 /// @nodoc
@@ -115,12 +105,7 @@ class __$$PlayerLiteImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? id = null,
-    Object? number = null,
-    Object? role = null,
-    Object? isLibero = null,
-  }) {
+  $Res call({Object? id = null, Object? number = null, Object? role = null}) {
     return _then(
       _$PlayerLiteImpl(
         id: null == id
@@ -135,10 +120,6 @@ class __$$PlayerLiteImplCopyWithImpl<$Res>
             ? _value.role
             : role // ignore: cast_nullable_to_non_nullable
                   as Role,
-        isLibero: null == isLibero
-            ? _value.isLibero
-            : isLibero // ignore: cast_nullable_to_non_nullable
-                  as bool,
       ),
     );
   }
@@ -151,7 +132,6 @@ class _$PlayerLiteImpl implements _PlayerLite {
     required this.id,
     required this.number,
     required this.role,
-    this.isLibero = false,
   });
 
   factory _$PlayerLiteImpl.fromJson(Map<String, dynamic> json) =>
@@ -163,13 +143,10 @@ class _$PlayerLiteImpl implements _PlayerLite {
   final int number;
   @override
   final Role role;
-  @override
-  @JsonKey()
-  final bool isLibero;
 
   @override
   String toString() {
-    return 'PlayerLite(id: $id, number: $number, role: $role, isLibero: $isLibero)';
+    return 'PlayerLite(id: $id, number: $number, role: $role)';
   }
 
   @override
@@ -179,14 +156,12 @@ class _$PlayerLiteImpl implements _PlayerLite {
             other is _$PlayerLiteImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.number, number) || other.number == number) &&
-            (identical(other.role, role) || other.role == role) &&
-            (identical(other.isLibero, isLibero) ||
-                other.isLibero == isLibero));
+            (identical(other.role, role) || other.role == role));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, number, role, isLibero);
+  int get hashCode => Object.hash(runtimeType, id, number, role);
 
   /// Create a copy of PlayerLite
   /// with the given fields replaced by the non-null parameter values.
@@ -207,7 +182,6 @@ abstract class _PlayerLite implements PlayerLite {
     required final int id,
     required final int number,
     required final Role role,
-    final bool isLibero,
   }) = _$PlayerLiteImpl;
 
   factory _PlayerLite.fromJson(Map<String, dynamic> json) =
@@ -219,8 +193,6 @@ abstract class _PlayerLite implements PlayerLite {
   int get number;
   @override
   Role get role;
-  @override
-  bool get isLibero;
 
   /// Create a copy of PlayerLite
   /// with the given fields replaced by the non-null parameter values.

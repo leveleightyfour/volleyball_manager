@@ -1,20 +1,21 @@
 import 'package:flame/components.dart';
 import 'package:flame/text.dart';
 import 'package:flutter/painting.dart';
+import 'package:volleyball_manager/shared/models/player_lite.dart';
 import 'package:volleyball_manager/shared/models/team_style.dart';
 
 class PlayerComponent extends PositionComponent {
   PlayerComponent.fromTeamStyle({
     required this.number,
     required TeamStyle teamStyle,
-    required bool isLibero,
     required double radius,
     this.displayName = '',
     this.roleLabel = '',
+    required Role role,
     Anchor anchor = Anchor.center,
     Vector2? position,
     int? priority,
-  }) : kit = isLibero ? teamStyle.libero : teamStyle.regular,
+  }) : kit = role == Role.l ? teamStyle.libero : teamStyle.regular,
        _radius = radius,
        super(
          size: Vector2(radius * 2, radius * 2 + 24),
@@ -27,15 +28,14 @@ class PlayerComponent extends PositionComponent {
 
   PlayerComponent.manual({
     required this.number,
-    required KitStyle kit,
+    required this.kit,
     required double radius,
     this.displayName = '',
     this.roleLabel = '',
     Anchor anchor = Anchor.center,
     Vector2? position,
     int? priority,
-  }) : kit = kit,
-       _radius = radius,
+  }) : _radius = radius,
        super(
          size: Vector2(radius * 2, radius * 2 + 24),
          anchor: anchor,
@@ -49,8 +49,8 @@ class PlayerComponent extends PositionComponent {
   int number;
   KitStyle kit;
 
-  String displayName; // e.g., "Smith"
-  String roleLabel; // e.g., "OH", "S", "MB", "OPP", "L"
+  String displayName;
+  String roleLabel;
 
   void setHidden(bool v) => _hidden = v;
   void setNumber(int n) => number = n;

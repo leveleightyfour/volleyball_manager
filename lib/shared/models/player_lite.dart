@@ -11,7 +11,6 @@ class PlayerLite with _$PlayerLite {
     required int id,
     required int number,
     required Role role,
-    @Default(false) bool isLibero,
   }) = _PlayerLite;
 
   factory PlayerLite.fromJson(Map<String, dynamic> json) =>

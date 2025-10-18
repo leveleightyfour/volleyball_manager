@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../state/match_state.dart';
+import '../../state/match_state.dart';
 
 part 'events.freezed.dart';
 part 'events.g.dart';
@@ -13,7 +13,7 @@ class EngineEvent with _$EngineEvent {
   }) = ServeBallFlight;
 
   const factory EngineEvent.playerMove({
-    required int playerId, // reserved for future granular moves
+    required int playerId,
     required double toX,
     required double toY,
     @Default(0.5) double durationSec,

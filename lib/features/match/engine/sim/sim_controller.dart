@@ -1,30 +1,44 @@
-import '../state/match_state.dart';
+// lib/features/match/engine/sim/sim_controller.dart
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:volleyball_manager/shared/log/live_log.dart';
+import '../../state/match_state.dart';
 import '../events/events.dart';
 import '../outcomes/outcomes.dart';
+import 'outcome_strategy.dart';
 
-/// Minimal deterministic controller driven by supplied outcomes.
-/// Tracks ball possession, handles sideout/rotation correctly.
 class SimController {
-  SimController({MatchState? initial})
-    : _state = initial ?? MatchState.initial() {
-    _possession = _state.serverSide; // server starts with the ball each rally
+  SimController(
+    this.read, {
+    MatchState? initial,
+    required OutcomeStrategy strategy,
+  }) : _state = initial ?? MatchState.initial(),
+       _strategy = strategy {
+    _possession = _state.serverSide;
   }
 
   MatchState get state => _state;
   MatchState _state;
 
+  final OutcomeStrategy _strategy;
+  final Ref read;
+
   // Which team is currently in control of the ball (attacking next)?
   late TeamSide _possession;
 
-  ({MatchState state, List<EngineEvent> events}) advance({
-    required ManualInputs manual,
-  }) {
+  Future<({MatchState state, List<EngineEvent> events})> advance() async {
     final events = <EngineEvent>[];
     var s = _state;
+
+    log.i(
+      read,
+      '[CTRL] phase=${s.phase} rally=${s.rallyId} server=${s.serverSide}',
+    );
 
     switch (s.phase) {
       case MatchPhase.preServe:
         _possession = s.serverSide; // reset each rally
+        log.i(read, '[CTRL] → serve: emit serveBallFlight');
         events.add(
           EngineEvent.phaseChanged(phase: MatchPhase.serve, rallyId: s.rallyId),
         );
@@ -35,120 +49,59 @@ class SimController {
         break;
 
       case MatchPhase.serve:
-        final so = manual.serveOutcome;
-        if (so == null) return (state: s, events: events);
+        {
+          final so = await _strategy.getServeOutcome(s);
+          log.i(read, '[CTRL] serve outcome=$so');
+          if (so == null) return (state: s, events: events);
 
-        if (so == ServeOutcome.fault) {
-          final receiver = _other(s.serverSide);
-          final newScore = _addPoint(s.score, receiver);
-          final nextTick = s.rotationTick + 1;
-          final nextServer = receiver;
-          events.add(
-            EngineEvent.scoreChanged(home: newScore.home, away: newScore.away),
-          );
-          events.add(
-            EngineEvent.rotationAdvanced(
+          if (so == ServeOutcome.fault) {
+            final receiver = _other(s.serverSide);
+            final newScore = _addPoint(s.score, receiver);
+            final nextTick = s.rotationTick + 1;
+            final nextServer = receiver;
+
+            events.add(
+              EngineEvent.scoreChanged(
+                home: newScore.home,
+                away: newScore.away,
+              ),
+            );
+            events.add(
+              EngineEvent.rotationAdvanced(
+                rotationTick: nextTick,
+                serverSide: nextServer,
+              ),
+            );
+            events.add(
+              EngineEvent.rallyEnded(pointTo: receiver, rallyId: s.rallyId),
+            );
+
+            s = s.copyWith(
+              score: newScore,
               rotationTick: nextTick,
               serverSide: nextServer,
-            ),
-          );
-          events.add(
-            EngineEvent.rallyEnded(pointTo: receiver, rallyId: s.rallyId),
-          );
-          s = s.copyWith(
-            score: newScore,
-            rotationTick: nextTick,
-            serverSide: nextServer,
-            phase: MatchPhase.rallyEnd,
-          );
-        } else {
-          _possession = _other(s.serverSide);
-          events.add(
-            EngineEvent.phaseChanged(
-              phase: MatchPhase.reception,
-              rallyId: s.rallyId,
-            ),
-          );
-          s = s.copyWith(phase: MatchPhase.reception);
+              phase: MatchPhase.rallyEnd,
+            );
+          } else {
+            // In-play serve → receiving side has possession
+            _possession = _other(s.serverSide);
+            events.add(
+              EngineEvent.phaseChanged(
+                phase: MatchPhase.reception,
+                rallyId: s.rallyId,
+              ),
+            );
+            s = s.copyWith(phase: MatchPhase.reception);
+          }
+          break;
         }
-        break;
 
       case MatchPhase.reception:
-        if (manual.passOutcome == null) return (state: s, events: events);
-        events.add(
-          EngineEvent.phaseChanged(
-            phase: MatchPhase.setting,
-            rallyId: s.rallyId,
-          ),
-        );
-        s = s.copyWith(phase: MatchPhase.setting);
-        break;
+        {
+          final po = await _strategy.getPassOutcome(s);
+          log.i(read, '[CTRL] pass outcome=$po');
+          if (po == null) return (state: s, events: events);
 
-      case MatchPhase.setting:
-        if (manual.setOutcome == null) return (state: s, events: events);
-        events.add(
-          EngineEvent.phaseChanged(
-            phase: MatchPhase.attack,
-            rallyId: s.rallyId,
-          ),
-        );
-        s = s.copyWith(phase: MatchPhase.attack);
-        break;
-
-      case MatchPhase.attack:
-        final atk = manual.attackOutcome;
-        if (atk == null) return (state: s, events: events);
-
-        if (atk == AttackOutcome.kill) {
-          final pointTo = _possession; // attacker scores
-          final newScore = _addPoint(s.score, pointTo);
-          final sideout =
-              pointTo != s.serverSide; // receiving side won → flip serve
-
-          events.add(
-            EngineEvent.scoreChanged(home: newScore.home, away: newScore.away),
-          );
-          if (sideout) {
-            final nextTick = s.rotationTick + 1;
-            final nextServer = _other(s.serverSide);
-            events.add(
-              EngineEvent.rotationAdvanced(
-                rotationTick: nextTick,
-                serverSide: nextServer,
-              ),
-            );
-            s = s.copyWith(rotationTick: nextTick, serverSide: nextServer);
-          }
-          events.add(
-            EngineEvent.rallyEnded(pointTo: pointTo, rallyId: s.rallyId),
-          );
-          s = s.copyWith(score: newScore, phase: MatchPhase.rallyEnd);
-        } else if (atk == AttackOutcome.error || atk == AttackOutcome.blocked) {
-          final pointTo = _other(_possession); // defender scores
-          final newScore = _addPoint(s.score, pointTo);
-          final sideout = pointTo != s.serverSide;
-
-          events.add(
-            EngineEvent.scoreChanged(home: newScore.home, away: newScore.away),
-          );
-          if (sideout) {
-            final nextTick = s.rotationTick + 1;
-            final nextServer = _other(s.serverSide);
-            events.add(
-              EngineEvent.rotationAdvanced(
-                rotationTick: nextTick,
-                serverSide: nextServer,
-              ),
-            );
-            s = s.copyWith(rotationTick: nextTick, serverSide: nextServer);
-          }
-          events.add(
-            EngineEvent.rallyEnded(pointTo: pointTo, rallyId: s.rallyId),
-          );
-          s = s.copyWith(score: newScore, phase: MatchPhase.rallyEnd);
-        } else {
-          // dug → rally continues; possession flips and we go back to setting
-          _possession = _other(_possession);
           events.add(
             EngineEvent.phaseChanged(
               phase: MatchPhase.setting,
@@ -156,8 +109,98 @@ class SimController {
             ),
           );
           s = s.copyWith(phase: MatchPhase.setting);
+          break;
         }
-        break;
+
+      case MatchPhase.setting:
+        {
+          final so = await _strategy.getSetOutcome(s);
+          log.i(read, '[CTRL] set outcome=$so');
+          if (so == null) return (state: s, events: events);
+
+          // You could enqueue playerMove for hitters/setter here.
+          events.add(
+            EngineEvent.phaseChanged(
+              phase: MatchPhase.attack,
+              rallyId: s.rallyId,
+            ),
+          );
+          s = s.copyWith(phase: MatchPhase.attack);
+          break;
+        }
+
+      case MatchPhase.attack:
+        {
+          final atk = await _strategy.getAttackOutcome(s);
+          log.i(read, '[CTRL] attack outcome=$atk');
+          if (atk == null) return (state: s, events: events);
+
+          if (atk == AttackOutcome.kill) {
+            final pointTo = _possession; // attacker scores
+            final newScore = _addPoint(s.score, pointTo);
+            final sideout = pointTo != s.serverSide;
+
+            events.add(
+              EngineEvent.scoreChanged(
+                home: newScore.home,
+                away: newScore.away,
+              ),
+            );
+            if (sideout) {
+              final nextTick = s.rotationTick + 1;
+              final nextServer = _other(s.serverSide);
+              events.add(
+                EngineEvent.rotationAdvanced(
+                  rotationTick: nextTick,
+                  serverSide: nextServer,
+                ),
+              );
+              s = s.copyWith(rotationTick: nextTick, serverSide: nextServer);
+            }
+            events.add(
+              EngineEvent.rallyEnded(pointTo: pointTo, rallyId: s.rallyId),
+            );
+            s = s.copyWith(score: newScore, phase: MatchPhase.rallyEnd);
+          } else if (atk == AttackOutcome.error ||
+              atk == AttackOutcome.blocked) {
+            final pointTo = _other(_possession); // defender scores
+            final newScore = _addPoint(s.score, pointTo);
+            final sideout = pointTo != s.serverSide;
+
+            events.add(
+              EngineEvent.scoreChanged(
+                home: newScore.home,
+                away: newScore.away,
+              ),
+            );
+            if (sideout) {
+              final nextTick = s.rotationTick + 1;
+              final nextServer = _other(s.serverSide);
+              events.add(
+                EngineEvent.rotationAdvanced(
+                  rotationTick: nextTick,
+                  serverSide: nextServer,
+                ),
+              );
+              s = s.copyWith(rotationTick: nextTick, serverSide: nextServer);
+            }
+            events.add(
+              EngineEvent.rallyEnded(pointTo: pointTo, rallyId: s.rallyId),
+            );
+            s = s.copyWith(score: newScore, phase: MatchPhase.rallyEnd);
+          } else {
+            // dug/continue → flip possession and go back to setting
+            _possession = _other(_possession);
+            events.add(
+              EngineEvent.phaseChanged(
+                phase: MatchPhase.setting,
+                rallyId: s.rallyId,
+              ),
+            );
+            s = s.copyWith(phase: MatchPhase.setting);
+          }
+          break;
+        }
 
       case MatchPhase.rallyEnd:
         final nextRally = s.rallyId + 1;
@@ -175,21 +218,6 @@ class SimController {
     _state = s;
     return (state: s, events: events);
   }
-}
-
-/// Inputs for a single step. Provide only what the current phase needs.
-class ManualInputs {
-  final ServeOutcome? serveOutcome;
-  final PassOutcome? passOutcome;
-  final SetOutcome? setOutcome;
-  final AttackOutcome? attackOutcome;
-
-  const ManualInputs({
-    this.serveOutcome,
-    this.passOutcome,
-    this.setOutcome,
-    this.attackOutcome,
-  });
 }
 
 // ---------- helpers ----------
