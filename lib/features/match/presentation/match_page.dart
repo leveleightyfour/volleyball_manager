@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:volleyball_manager/features/match/engine/positions/position_providers.dart';
 import 'package:volleyball_manager/features/match/engine/sim/sim_provider.dart';
 import 'package:volleyball_manager/features/match/game/match_game.dart';
+import 'package:volleyball_manager/features/match/presentation/stats_panel.dart';
+import 'package:volleyball_manager/features/match/stats/stats_provider.dart';
 
 class MatchPage extends ConsumerWidget {
   const MatchPage({super.key});
@@ -11,6 +13,7 @@ class MatchPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sim = ref.read(simControllerProvider);
+    final statsNotifier = ref.read(statsNotifierProvider.notifier);
 
     final resolver = ref.watch(positionResolverProvider);
     return resolver.when(
@@ -23,14 +26,22 @@ class MatchPage extends ConsumerWidget {
         return Scaffold(
           backgroundColor: Colors.black,
           body: SafeArea(
-            child: GameWidget(
-              game: MatchGame(
-                sim: sim,
-                positionResolver: posResolver,
-                debugOverlayEnabled: false,
-                playerRadius: 22,
-                courtPadding: 12,
-              ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: GameWidget(
+                    game: MatchGame(
+                      sim: sim,
+                      positionResolver: posResolver,
+                      statsNotifier: statsNotifier,
+                      debugOverlayEnabled: false,
+                      playerRadius: 22,
+                      courtPadding: 12,
+                    ),
+                  ),
+                ),
+                const StatsPanel(),
+              ],
             ),
           ),
         );

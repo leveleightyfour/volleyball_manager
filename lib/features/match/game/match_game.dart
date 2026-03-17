@@ -10,9 +10,10 @@ import '../../../shared/models/team_style.dart';
 import '../../../shared/models/player_lite.dart';
 
 import '../engine/sim/sim_controller.dart';
-import '../engine/state/match_state.dart' show TeamSide, MatchPhase;
+import '../engine/state/match_state.dart' show TeamSide, MatchPhase, MatchState;
 import '../engine/outcomes/outcomes.dart';
 import '../engine/events/events.dart';
+import '../stats/stats_provider.dart';
 
 import 'components/court_component.dart';
 import 'components/player_component.dart';
@@ -25,6 +26,7 @@ class MatchGame extends FlameGame with KeyboardEvents {
   MatchGame({
     required this.sim,
     required this.positionResolver,
+    this.statsNotifier,
     this.playerRadius = 22,
     this.courtPadding = 16.0,
     this.debugOverlayEnabled = false,
@@ -34,6 +36,8 @@ class MatchGame extends FlameGame with KeyboardEvents {
   final SimController sim;
 
   final PositionResolver positionResolver;
+
+  final StatsNotifier? statsNotifier;
 
   // ----------------- Visual params -----------------
   final double playerRadius;
@@ -173,7 +177,14 @@ class MatchGame extends FlameGame with KeyboardEvents {
 
   // ----------------- Engine integration -----------------
   void _stepSim(ManualInputs inputs) {
+    final before = sim.state;
     final res = sim.advance(manual: inputs);
+    statsNotifier?.record(
+      stateBefore: before,
+      inputs: inputs,
+      stateAfter: res.state,
+      events: res.events,
+    );
     _handleEvents(res.events);
     _syncRotationFromEngine();
   }
