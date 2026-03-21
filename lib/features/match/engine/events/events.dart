@@ -40,6 +40,23 @@ class EngineEvent with _$EngineEvent {
     required int rallyId,
   }) = RallyEnded;
 
+  const factory EngineEvent.setEnded({
+    required TeamSide winner,
+    required int setsHome,
+    required int setsAway,
+    required int setNumber,
+    required int finalScoreHome,
+    required int finalScoreAway,
+  }) = SetEnded;
+
+  const factory EngineEvent.matchEnded({
+    required TeamSide winner,
+    required int setsHome,
+    required int setsAway,
+    required int finalScoreHome,
+    required int finalScoreAway,
+  }) = MatchEnded;
+
   factory EngineEvent.fromJson(Map<String, Object?> json) =>
       _$EngineEventFromJson(json);
 }

@@ -108,3 +108,45 @@ Map<String, dynamic> _$$RallyEndedImplToJson(_$RallyEndedImpl instance) =>
       'rallyId': instance.rallyId,
       'runtimeType': instance.$type,
     };
+
+_$SetEndedImpl _$$SetEndedImplFromJson(Map<String, dynamic> json) =>
+    _$SetEndedImpl(
+      winner: $enumDecode(_$TeamSideEnumMap, json['winner']),
+      setsHome: (json['setsHome'] as num).toInt(),
+      setsAway: (json['setsAway'] as num).toInt(),
+      setNumber: (json['setNumber'] as num).toInt(),
+      finalScoreHome: (json['finalScoreHome'] as num).toInt(),
+      finalScoreAway: (json['finalScoreAway'] as num).toInt(),
+      $type: json['runtimeType'] as String?,
+    );
+
+Map<String, dynamic> _$$SetEndedImplToJson(_$SetEndedImpl instance) =>
+    <String, dynamic>{
+      'winner': _$TeamSideEnumMap[instance.winner]!,
+      'setsHome': instance.setsHome,
+      'setsAway': instance.setsAway,
+      'setNumber': instance.setNumber,
+      'finalScoreHome': instance.finalScoreHome,
+      'finalScoreAway': instance.finalScoreAway,
+      'runtimeType': instance.$type,
+    };
+
+_$MatchEndedImpl _$$MatchEndedImplFromJson(Map<String, dynamic> json) =>
+    _$MatchEndedImpl(
+      winner: $enumDecode(_$TeamSideEnumMap, json['winner']),
+      setsHome: (json['setsHome'] as num).toInt(),
+      setsAway: (json['setsAway'] as num).toInt(),
+      finalScoreHome: (json['finalScoreHome'] as num).toInt(),
+      finalScoreAway: (json['finalScoreAway'] as num).toInt(),
+      $type: json['runtimeType'] as String?,
+    );
+
+Map<String, dynamic> _$$MatchEndedImplToJson(_$MatchEndedImpl instance) =>
+    <String, dynamic>{
+      'winner': _$TeamSideEnumMap[instance.winner]!,
+      'setsHome': instance.setsHome,
+      'setsAway': instance.setsAway,
+      'finalScoreHome': instance.finalScoreHome,
+      'finalScoreAway': instance.finalScoreAway,
+      'runtimeType': instance.$type,
+    };

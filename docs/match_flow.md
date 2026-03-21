@@ -116,6 +116,80 @@ class MatchState with _$MatchState {
 
 ---
 
+## Volleyball Rotation & Libero Rules (5-1 System)
+
+### Zone numbering
+
+```
+Zone layout (facing the net, home team's perspective):
+  4(LF) | 3(MF) | 2(RF)
+  5(LB) | 6(MB) | 1(RB) ← server
+```
+
+- Zones 2, 3, 4 = **front row**; zones 1, 5, 6 = **back row**
+- The player in zone 1 (RB) serves
+
+### Correct 5-1 rotation zone map
+
+Starting position: S=z1, OH1=z2, MB1=z3, OPP=z4, OH2=z5, MB2=z6
+
+| Rotation | Server | z1  | z2  | z3  | z4  | z5  | z6  | L replaces |
+|----------|--------|-----|-----|-----|-----|-----|-----|------------|
+| R1       | S      | S   | OH1 | MB1 | OPP | OH2 | **L** | MB2 (back) |
+| R2       | OH1    | OH1 | MB1 | OPP | OH2 | **L** | S   | MB2 (back) |
+| R3       | MB1    | **L** | OPP | OH2 | MB2 | S   | OH1 | MB1 (serve) → L off-bench when serving |
+| R4       | OPP    | OPP | OH2 | MB2 | S   | OH1 | **L** | MB1 (back) |
+| R5       | OH2    | OH2 | MB2 | S   | OH1 | **L** | OPP | MB1 (back) |
+| R6       | MB2    | **L** | S   | OH1 | MB1 | OPP | OH2 | MB2 (serve) → L off-bench when serving |
+
+**Invariants:**
+- OH1 and OH2 are always in opposite rows (one front, one back)
+- MB1 and MB2 are always in opposite rows (one front, one back)
+- L **replaces the back-row MB** in every rotation
+- When MB is serving (R3: MB1, R6: MB2): L comes off the bench; the MB serves from z1 and then transitions to their **defense position z5** after the serve
+
+### Serve formation vs Receive formation
+
+- **Serve formation** (when this team serves): server stands at x≈−0.08 (behind own endline); L shown **off-court at bench position** (`servingBenchRoleFor`) during MB serve rotations (R3/R6); all other players at their rotation zone positions.
+- **Receive formation** (`ReceiveFormationCalculator`): L is back on court in z1 (or wherever the back-row MB was); passers pulled to x≈0.14 (deep receive position); non-passers at their rotation-appropriate depth.
+
+### Serving bench rule (`servingBenchRoleFor`)
+
+- **R3** (MB1 serves) → bench = `'L'` (Libero off; MB1 on court)
+- **R6** (MB2 serves) → bench = `'L'` (Libero off; MB2 on court)
+- **All other rotations** → bench = the back-row MB replaced by Libero (same as `benchRoleFor`)
+
+### Non-passer positioning rules
+
+- **Front-row non-passer**: x ≈ 0.90 (as far forward as legally possible — near net)
+- **Back-row non-passer**: x ≈ 0.03 (as far back as legally possible — near endline)
+- **Passers**: x ≈ 0.14 (pulled back to deep receive position), y spread to their zone's natural lateral position
+
+### Phase-by-phase player movement
+
+1. **preServe** (1.5s delay): all 12 players animate to serve/receive formation
+2. **serve**: serving team stays in formation; serving team transitions to defense during ball flight
+3. **reception**: passers move toward ball landing zone; non-passers sprint to pre-attack positions (setter → front-right, MBs → attack line centre, OHs → approach angles)
+4. **setting**: ball arcs slowly from receive zone to setter; players already in attack positions
+5. **attack**: OHs outside the sideline at attack line, MBs at centre of attack line
+
+### Default defense positions (after serve)
+
+Serving team moves to these fixed positions after contact:
+
+| Role | Target Zone | Position |
+|------|-------------|----------|
+| S | z1 (RB) | Back-right |
+| OPP | z2 (RF) | Front-right |
+| Front-row MB | z3 (MF) | Middle block |
+| Front-row OH | z4 (LF) | Front-left |
+| L | z5 (LB) | Back-left |
+| Back-row OH / server OH | z6 (MB) | Back-middle |
+
+When MB is serving: MB→z5, L absent (on bench). All other roles same.
+
+---
+
 ## Simulation Engine
 
 ### `SimController`
@@ -158,11 +232,212 @@ abstract class OutcomeStrategy {
 
 The default concrete `EngineOutcomeStrategy` uses `ref` to read tactics & random seeds.
 
+### Set option gating
+
+- **Backrow attack** (`setBackRow`): only available when **OPP is back row AND setter is front row**.
+  - When OPP is back row but setter is also back row → falls back to `setLeftSideHigh/Tempo`.
+- **Pipe** (`setPipe`): only available on perfect pass **and setter is front row**.
+- **Tip** (`setTip`): only available on perfect pass **and setter is front row**.
+
 ### Optional phase systems (future)
 
-- `AttackBlockSystem` — attacker vs blockers model (stuff/kill/live).  
-- `AttackDefenceSystem` — dig vs ball-to-floor.  
+- `AttackBlockSystem` — attacker vs blockers model (stuff/kill/live).
+- `AttackDefenceSystem` — dig vs ball-to-floor.
 These can be **called inside `getAttackOutcome`** to produce richer results without changing the higher-level flow.
+
+---
+
+## Simulation Model Detail
+
+### Serve → Pass model
+
+Serve only resolves to **`fault`** or **`in_play`**. There is no `ace` at the serve phase.
+
+- Fault probability is driven by `serve_vs_reception` outcome curve (DB keys `error/ace/good/perfect` are remapped to `fault/in_play` before picking).
+- The **serve differential** (server skill − receiver skill) is stored internally and carried into the pass phase.
+- The serve **zone** (`zone1`, `zone5`, `zone6`, `seam16`, `seam56`) is selected by the number of passers and stored for passer selection in the pass phase.
+- The **primary receiver** for the differential calculation is selected by zone using `MatchRoster.getPasserForZone`.
+
+#### Ace attribution
+
+Aces emerge from the **pass phase**: when `PassOutcome.shank` is drawn, `AuditLogService.logPassOutcome` retroactively records an **ace** against the server's stats. The server reference (`_lastServer`) is held between phases.
+
+**Shank probability** scales with serve advantage:
+
+```
+pShank = (serveDifferential × 0.013).clamp(0.0, 0.18)
+```
+
+Pass outcome chain (each threshold is cumulative):
+
+| Outcome      | Probability source                            |
+|-------------|----------------------------------------------|
+| perfect     | base + skill modifier                         |
+| average     | fixed base                                    |
+| singleOption | base − skill modifier × 0.5                  |
+| overpass    | remainder after above + shank, capped 1–20%  |
+| shank (ace) | `serveDifferential × 0.013`, max 18%          |
+
+---
+
+---
+
+## Coordinate Conventions
+
+All position calculators use a **team-relative y** convention:
+
+| y value | meaning (for BOTH teams after mirroring) |
+|---------|------------------------------------------|
+| `≈ 0.10` | attacker's own **left pin** (OH, position 4) |
+| `≈ 0.90` | attacker's own **right pin** (OPP, position 2) |
+| `≈ 0.50` | court centre |
+
+`nx = 0.0` = own endline; `nx = 1.0` = net.
+
+### SetLandingCalculator
+- y values authored for home team (OH at top `y≈0.06–0.18`, OPP at bottom `y≈0.82–0.94`).
+- For away team, `_toScreen` mirrors y: `ey = 1.0 − ny`.
+- Backrow contact: `nx = 0.76–0.82` (~2 m from net), `y ≈ 0.74–0.88` (right-side/position-1 area).
+- Pipe contact: `nx = 0.76–0.82`, `y ≈ 0.40–0.60` (centre).
+
+### AttackLandingCalculator
+- Landing zones authored for away defending (home attacking).
+- When home defends (away attacking), `_toScreen` flips y: `ey = 1.0 − ny`.
+
+### Blocker positioning
+- `_blockerCenterY(set, defendingSide)` returns the y of the block seam, matching the **attacking team's** pin position on screen. Home defending flips the base value (`1.0 − base`).
+- `_blockerYSpreads(count, set, defendingSide)` determines MB/wing offset direction based on which side of the screen the attacker originates from.
+- **Front-row non-blockers** are skipped from the floor map and remain at their defense-formation position (seam coverage near the net).
+
+### Defense floor zones
+- Zone 1 (right-back): home `y=0.88`, away `y=0.12` — near the sideline for line-defense coverage.
+- Zone 5 (left-back): home `y=0.12`, away `y=0.88`.
+- Zone 6 (middle-back): both `y=0.50`.
+
+---
+
+### Pass quality → Blocker count
+
+`MatchRoster.getBlockers` uses pass quality to determine how many blockers the defence assembles:
+
+| Pass quality  | Blockers |
+|--------------|---------|
+| perfect       | 1       |
+| average       | 2       |
+| singleOption  | 3       |
+| other         | 1       |
+
+Blocker roles are selected by set type (priority-ordered):
+
+| Set type                         | Blocker priority order   |
+|---------------------------------|--------------------------|
+| leftSideHigh / leftSideTempo    | MB1, OH2, OPP            |
+| rightSideHigh / rightSideTempo  | MB1, OH1, OH2            |
+| middle                          | MB1, MB2, OPP            |
+| pipe                            | MB1, MB2, OH2            |
+| backrow                         | MB1, OPP, OH2            |
+| tip                             | *(none)*                 |
+
+---
+
+### Attack direction model
+
+`AttackDirection` is zone-precise. Available directions are determined by **set type × pass quality** via `_attackDirectionsFor`, then weighted by attacker `vision` and `versatility` via `_directionWeight`.
+
+#### Enum values
+
+```dart
+enum AttackDirection {
+  // OH (left-side)
+  ohLine,           // zone 1 line
+  ohCrossShallow,   // zone 5 cross
+  ohCrossSharp,     // zone 4 sharp angle
+
+  // OPP / right-side (mirror of OH)
+  oppLine,          // zone 5 line
+  oppCrossShallow,  // zone 1 cross
+  oppCrossSharp,    // zone 2 sharp angle
+
+  // MB / pipe / backrow
+  middleZone1,      // to zone 1
+  middleZone5,      // to zone 5
+  middleZone6,      // deep zone 6 (pipe / backrow)
+
+  atBlock,          // aimed at block
+}
+```
+
+#### Available directions by pass quality
+
+**Perfect pass (1 blocker):**
+
+| Set type        | Available directions                                        |
+|----------------|------------------------------------------------------------|
+| middle          | middleZone1, atBlock, middleZone5                          |
+| leftSide*       | ohLine, atBlock, ohCrossShallow, ohCrossSharp              |
+| rightSide*      | oppLine, atBlock, oppCrossShallow, oppCrossSharp           |
+| pipe            | middleZone6, atBlock, middleZone1, middleZone5             |
+| backrow         | oppLine, atBlock, oppCrossShallow, oppCrossSharp           |
+| tip             | atBlock, ohCrossShallow                                    |
+
+**Average pass (2 blockers):**
+
+| Set type        | Available directions                          |
+|----------------|----------------------------------------------|
+| middle          | middleZone1, atBlock, middleZone5             |
+| leftSide*       | ohLine, atBlock, ohCrossShallow               |
+| rightSide*      | oppLine, atBlock, oppCrossShallow             |
+| pipe            | middleZone6, atBlock, middleZone1             |
+| backrow         | oppLine, atBlock, oppCrossShallow             |
+| tip             | atBlock, ohCrossShallow                       |
+
+**Single option (3 blockers):**
+
+| Set type        | Available directions              |
+|----------------|----------------------------------|
+| middle          | atBlock                           |
+| leftSide*       | atBlock, ohCrossShallow           |
+| rightSide*      | atBlock, oppCrossShallow          |
+| pipe / backrow  | atBlock, middleZone6              |
+| tip             | atBlock                           |
+
+#### Floor defenders by blocker count
+
+`getDefenders` now takes `blockerCount` to remove players who are at the net blocking and add MB1 as a middle-court floor defender when only 1 blocker commits.
+
+| Direction        | 1 blocker          | 2 blockers     | 3 blockers |
+|-----------------|--------------------|----------------|------------|
+| ohLine          | L, OH2, **MB1**    | L, OH2         | L          |
+| ohCrossShallow  | L, OH1, **MB1**    | L, OH1         | L, OH1     |
+| ohCrossSharp    | OH1                | —              | —          |
+| oppLine         | L, OH1, **MB1**    | L              | L          |
+| oppCrossShallow | L, OH2, **MB1**    | L, OH2         | L          |
+| oppCrossSharp   | OH2                | —              | —          |
+| middleZone1     | L, OH2, **MB1**    | L, OH2         | L, OH2     |
+| middleZone5     | L, OH1, **MB1**    | L, OH1         | L, OH1     |
+| middleZone6     | L, **MB1**         | L              | L          |
+| atBlock         | —                  | —              | —          |
+
+*Blocker compositions (from `getBlockers`): leftSide → MB1 / MB1+OH2 / MB1+OH2+OPP; rightSide → MB1 / MB1+OH1 / MB1+OH1+OH2; middle → MB1 / MB1+MB2 / MB1+MB2+OPP*
+
+#### Direction weighting
+
+```dart
+// Line / zone shots: boosted by vision
+ohLine / oppLine / middleZone1 / middleZone5 → 0.30 + (vision−10)×0.02
+
+// Cross shots: boosted by versatility
+ohCrossShallow / oppCrossShallow → 0.35 + (versatility−10)×0.015
+
+// Sharp cross: requires both vision + versatility
+ohCrossSharp / oppCrossSharp → 0.15 + (vision−10)×0.02 + (versatility−10)×0.02
+
+// Deep zone (pipe/backrow)
+middleZone6 → 0.25 + (versatility−10)×0.015
+
+// At-block: reduced by vision (smart attackers avoid it)
+atBlock → 0.25 − (vision−10)×0.015
+```
 
 ---
 

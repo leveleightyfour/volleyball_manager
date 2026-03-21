@@ -1,0 +1,255 @@
+{
+  "serveJumpServe": {
+    "skillName": "Serve a Jump Serve",
+    "category": "serving",
+    "formula": {
+      "wristSnap": 0.40,
+      "power": 0.40,
+      "accuracy": 0.10,
+      "aggression": 0.10
+    },
+    "isActive": true
+  },
+  "serveJumpFloat": {
+    "skillName": "Serve a Jump Float Serve",
+    "category": "serving",
+    "formula": {
+      "wristSnap": 0.10,
+      "power": 0.10,
+      "accuracy": 0.40,
+      "aggression": 0.40
+    },
+    "isActive": true
+  },
+  "setLeftSideTempo": {
+    "skillName": "Set the Outside Tempo",
+    "category": "setting",
+    "formula": {
+      "strength": 0.10,
+      "positioning": 0.15,
+      "predictability": 0.40,
+      "creativity": 0.25
+    },
+    "isActive": true
+  },
+  "setMiddle": {
+    "skillName": "Set the Middle",
+    "category": "setting",
+    "formula": {
+      "strength": 0.05,
+      "positioning": 0.05,
+      "predictability": 0.50,
+      "creativity": 0.50
+    },
+    "isActive": true
+  },
+  "setBackRow": {
+    "skillName": "Set the Back Row",
+    "category": "setting",
+    "formula": {
+      "strength": 0.10,
+      "positioning": 0.25,
+      "predictability": 0.25,
+      "creativity": 0.40
+    },
+    "isActive": true
+  },
+  "setLeftSideHigh": {
+    "skillName": "Set the Outside High Ball",
+    "category": "setting",
+    "formula": {
+      "strength": 0.10,
+      "positioning": 0.40,
+      "predictability": 0.05,
+      "creativity": 0.05
+    },
+    "isActive": true
+  },
+  "setRightSideTempo": {
+    "skillName": "Set the Right Side Tempo",
+    "category": "setting",
+    "formula": {
+      "strength": 0.10,
+      "positioning": 0.15,
+      "predictability": 0.40,
+      "creativity": 0.25
+    },
+    "isActive": true
+  },
+  "setRightSideHigh": {
+    "skillName": "Set the Right Side High Ball",
+    "category": "setting",
+    "formula": {
+      "strength": 0.10,
+      "positioning": 0.40,
+      "predictability": 0.05,
+      "creativity": 0.05
+    },
+    "isActive": true
+  },
+  "blockLeftSideHigh": {
+    "skillName": "Block Outside High Ball Attack",
+    "category": "blocking",
+    "formula": {
+      "penetration": 0.10,
+      "height": 0.40,
+      "form": 0.30,
+      "anticipation": 0.20
+    },
+    "isActive": true
+  },
+  "blockLeftSideTempo": {
+    "skillName": "Block Outside Tempo Attack",
+    "category": "blocking",
+    "formula": {
+      "penetration": 0.20,
+      "height": 0.30,
+      "form": 0.40,
+      "anticipation": 0.10
+    },
+    "isActive": true
+  },
+  "blockMiddle": {
+    "skillName": "Block Middle Attack",
+    "category": "blocking",
+    "formula": {
+      "penetration": 0.40,
+      "height": 0.10,
+      "form": 0.20,
+      "anticipation": 0.30
+    },
+    "isActive": true
+  },
+  "blockRightSideHigh": {
+    "skillName": "Block Right Side High Ball Attack",
+    "category": "blocking",
+    "formula": {
+      "penetration": 0.10,
+      "height": 0.40,
+      "form": 0.30,
+      "anticipation": 0.20
+    },
+    "isActive": true
+  },
+  "blockRightSideTempo": {
+    "skillName": "Block Right Side Tempo Attack",
+    "category": "blocking",
+    "formula": {
+      "penetration": 0.30,
+      "height": 0.20,
+      "form": 0.10,
+      "anticipation": 0.40
+    },
+    "isActive": true
+  },
+  "receptionJumpServe": {
+    "skillName": "Receive Jump Serve",
+    "category": "reception",
+    "formula": {
+      "footwork": 0.10,
+      "platform": 0.50,
+      "stability": 0.35,
+      "touch": 0.15
+    },
+    "isActive": true
+  },
+  "receptionJumpFloat": {
+    "skillName": "Receive Jump Float Serve",
+    "category": "reception",
+    "formula": {
+      "footwork": 0.35,
+      "platform": 0.15,
+      "stability": 0.05,
+      "touch": 0.45
+    },
+    "isActive": true
+  },
+  "attackLeftSideTempo": {
+    "skillName": "Attack an Outside Tempo Ball",
+    "category": "attack",
+    "formula": {
+      "vision": 0.40,
+      "timing": 0.15,
+      "power": 0.15,
+      "versatility": 0.30
+    },
+    "isActive": true
+  },
+  "attackMiddle": {
+    "skillName": "Attack a Middle Ball",
+    "category": "attack",
+    "formula": {
+      "vision": 0.10,
+      "timing": 0.50,
+      "power": 0.25,
+      "versatility": 0.15
+    },
+    "isActive": true
+  },
+  "attackBackRow": {
+    "skillName": "Attack a Back Row Ball",
+    "category": "attack",
+    "formula": {
+      "vision": 0.15,
+      "timing": 0.35,
+      "power": 0.15,
+      "versatility": 0.35
+    },
+    "isActive": true
+  },
+  "attackLeftSideHigh": {
+    "skillName": "Attack an Outside High Ball",
+    "category": "attack",
+    "formula": {
+      "vision": 0.30,
+      "timing": 0.05,
+      "power": 0.50,
+      "versatility": 0.25
+    },
+    "isActive": true
+  },
+  "defendLeftSideTempo": {
+    "skillName": "Defend an Outside Tempo Attack",
+    "category": "defense",
+    "formula": {
+      "reaction": 0.40,
+      "reading": 0.05,
+      "intention": 0.25,
+      "control": 0.30
+    },
+    "isActive": true
+  },
+  "defendMiddle": {
+    "skillName": "Defend a Middle Attack",
+    "category": "defense",
+    "formula": {
+      "reaction": 0.50,
+      "reading": 0.10,
+      "intention": 0.10,
+      "control": 0.30
+    },
+    "isActive": true
+  },
+  "defendBackRow": {
+    "skillName": "Defend a Back Row Attack",
+    "category": "defense",
+    "formula": {
+      "reaction": 0.30,
+      "reading": 0.20,
+      "intention": 0.20,
+      "control": 0.30
+    },
+    "isActive": true
+  },
+  "defendLeftSideHigh": {
+    "skillName": "Defend an Outside High Attack",
+    "category": "defense",
+    "formula": {
+      "reaction": 0.20,
+      "reading": 0.20,
+      "intention": 0.30,
+      "control": 0.30
+    },
+    "isActive": true
+  }
+}

@@ -19,31 +19,41 @@ import '../state/match_state.dart' show TeamSide, MatchPhase;
 import '../engine/events/events.dart';
 
 // Positioning
-import '../engine/positions/position_resolver.dart'; // resolveRoles(), resolveAnchor()
-import '../engine/positions/position_models.dart' show Role; // roster role tags
-import '../engine/positions/tactic_layout_key.dart'
-    show receiveTacticSuffix, serveTacticSuffix;
+import '../engine/positions/position_resolver.dart';
+import '../engine/positions/pass_landing_calculator.dart';
+import '../engine/positions/set_landing_calculator.dart';
+import '../engine/positions/attack_landing_calculator.dart';
+import '../engine/positions/attack_formation_config.dart';
+import '../engine/outcomes/outcomes.dart';
 
 // Tactics (canonical)
 import '../state/tactics_state.dart'
     show tacticsProvider, ServeReceiveTacticSpec;
-
-// Planners
-import 'package:volleyball_manager/features/match/engine/presentation/serve_receive_planner.dart'
-    hide ServeReceiveTacticSpec; // use the canonical one from state
-import 'package:volleyball_manager/features/match/engine/presentation/serve_target_planner.dart';
+import 'package:volleyball_manager/shared/log/match_debug_state.dart';
 
 // UI components
 import 'components/court_component.dart';
 import 'components/player_component.dart';
 import 'components/zone_overlay_component.dart';
 import 'components/ball_component.dart';
-import 'model/move_command.dart';
 import 'services/move_scheduler.dart';
+import 'services/camera_controller.dart';
+import 'services/layout_manager.dart';
+import 'services/event_handler.dart';
+import 'services/simulation_coordinator.dart';
 
-// Debug UI
+// State
+import '../state/match_stats_state.dart';
+import '../state/match_roster_provider.dart';
+
+// Overlays / debug UI
 import 'package:volleyball_manager/features/match/presentation/debug/serve_recieve_debug_button.dart';
 import 'package:volleyball_manager/features/match/presentation/debug/serve_recieve_debug_overlay.dart';
+import 'package:volleyball_manager/features/match/presentation/debug/defense_floor_overlay.dart';
+import 'package:volleyball_manager/features/match/presentation/overlays/stats_overlay.dart';
+
+// Audit log service
+import 'package:volleyball_manager/features/match/data/services/audit_log_service.dart';
 
 /// World wrapper so the camera can pan/zoom the whole playfield.
 class CourtWorld extends World {}
@@ -98,21 +108,23 @@ class MatchGame extends FlameGame
   late final CourtWorld worldLayer;
   CameraComponent? cameraComp; // nullable + guarded
 
-  // Zoom constraints & pinch state
-  static const double minZoom = 0.5; // Will be overridden to ensure court width >= 1/2 screen
-  static const double maxZoom = 3.0;
-  double _zoomAtGestureStart = 1.0;
-  Vector2? _lastFingerPosition; // Track finger position for direct camera control
-
   // Court bounds (computed on resize)
   Rect _courtBounds = Rect.zero;
 
-  // Gesture control
-  bool _gesturesEnabled = false;
+  // Last serve/pass landing position used as start of next ball animation
+  Offset? _lastBallLanding;
 
-  // Camera view state
-  Vector2? _smallCourtPosition;
-  double? _smallCourtZoom;
+  // True once the first attack of a rally has fired.
+  // Reset each preServe; set in _animateSetToAttacker before the animation runs.
+  // Drives rotation-aware vs natural attack positions.
+  bool _attackedThisRally = false;
+
+  // ----------------- Specialized Services -----------------
+  CameraController? _cameraController;
+  LayoutManager? _layoutManager;
+  EventHandler? _eventHandler;
+  SimulationCoordinator? _simCoordinator;
+  AttackFormationConfig? _attackFormations;
 
   @override
   Color backgroundColor() => const Color(0xFF1FB4DB);
@@ -128,26 +140,11 @@ class MatchGame extends FlameGame
   BallComponent? _ball;
 
   // ----------------- Labels -----------------
-  final _surnames = [
-    'Smith',
-    'Jones',
-    'Taylor',
-    'Brown',
-    'Williams',
-    'Wilson',
-    'Davis',
-    'Miller',
-    'Anderson',
-    'Clark',
-    'Lewis',
-    'Walker',
-    'Hall',
-    'Allen',
-    'Young',
-    'King',
-  ];
-  int _nameIdx = 0;
-  String _nextSurname() => _surnames[_nameIdx++ % _surnames.length];
+  /// Extracts the last word of a full name to use as a short display label.
+  String _surname(String fullName) {
+    final parts = fullName.trim().split(' ');
+    return parts.last;
+  }
 
   String _roleAbbr(Role r) {
     switch (r) {
@@ -164,56 +161,7 @@ class MatchGame extends FlameGame
     }
   }
 
-  // Map JSON role tags -> player id (handles OH1/2, MB1/2)
-  Map<String, int> _roleTagToPlayerId(List<PlayerLite> roster) {
-    int pick(List<PlayerLite> list, int idx) =>
-        list[(list.isEmpty ? 0 : (idx < list.length ? idx : 0))].id;
-
-    final s = roster.where((p) => p.role == Role.s).toList();
-    final opp = roster.where((p) => p.role == Role.opp).toList();
-    final lib = roster.where((p) => p.role == Role.l).toList();
-    final oh = roster.where((p) => p.role == Role.oh).toList();
-    final mb = roster.where((p) => p.role == Role.mb).toList();
-
-    return {
-      if (s.isNotEmpty) 'S': pick(s, 0),
-      if (opp.isNotEmpty) 'OPP': pick(opp, 0),
-      if (lib.isNotEmpty) 'L': pick(lib, 0),
-      if (oh.isNotEmpty) 'OH1': pick(oh, 0),
-      if (oh.isNotEmpty) 'OH2': pick(oh, oh.length > 1 ? 1 : 0),
-      if (mb.isNotEmpty) 'MB1': pick(mb, 0),
-      if (mb.isNotEmpty) 'MB2': pick(mb, mb.length > 1 ? 1 : 0),
-    };
-  }
-
-  // ----------------- Step scheduler -----------------
-  bool _isStepping = false;
-  bool _serveInFlight = false;
-  bool _pendingStep = false;
-
-  void _requestStep() {
-    if (_isStepping) {
-      _pendingStep = true;
-    } else {
-      _stepSim();
-    }
-  }
-
-  Future<void> _stepSim() async {
-    if (_isStepping) return;
-    _isStepping = true;
-    try {
-      final res = await sim.advance();
-      _handleEvents(res.events);
-      _syncRotationFromEngine();
-    } finally {
-      _isStepping = false;
-      if (_pendingStep) {
-        _pendingStep = false;
-        Future.microtask(_stepSim);
-      }
-    }
-  }
+  // Role tag mapping moved to LayoutManager
 
   // ----------------- Lifecycle -----------------
   @override
@@ -239,6 +187,13 @@ class MatchGame extends FlameGame
     _ball = BallComponent(radius: 10);
     worldLayer.add(_ball!);
 
+    // Build id → last-name lookup from the loaded roster.
+    final roster = ref.read(matchRosterCacheProvider);
+    final nameById = <int, String>{
+      for (final dto in [...roster.home.values, ...roster.away.values])
+        dto.id: _surname(dto.name),
+    };
+
     // Create player nodes (in the world)
     for (final p in [...homePlayers, ...awayPlayers]) {
       final isHome = homePlayers.any((hp) => hp.id == p.id);
@@ -252,7 +207,7 @@ class MatchGame extends FlameGame
         position: Vector2.zero(),
         anchor: Anchor.center,
         priority: 2,
-        displayName: _nextSurname(),
+        displayName: nameById[p.id] ?? '',
         roleLabel: _roleAbbr(p.role),
       );
       _playerNodes[p.id] = node;
@@ -260,15 +215,53 @@ class MatchGame extends FlameGame
     }
     _moveScheduler = MoveScheduler(_playerNodes);
 
+    // Initialize specialized services
+    _cameraController = CameraController(
+      getCamera: () => cameraComp,
+      getCanvasSize: () => size,
+      getCourtBounds: () => _courtBounds,
+      courtPadding: courtPadding,
+    );
+
+    _attackFormations = await AttackFormationConfig.load();
+
+    _layoutManager = LayoutManager(
+      positionResolver: positionResolver,
+      ref: ref,
+      playerNodes: _playerNodes,
+      overlay: overlay,
+      homePlayers: homePlayers,
+      awayPlayers: awayPlayers,
+      courtPadding: courtPadding,
+      rng: _rng,
+    );
+
+    _eventHandler = EventHandler(
+      moveScheduler: _moveScheduler,
+      ball: _ball,
+      onLayoutUpdate: () => _layoutFromCanvas(size),
+      requestStep: () => _simCoordinator?.requestStep(),
+    );
+
+    _simCoordinator = SimulationCoordinator(
+      sim: sim,
+      onEvents: _handleEvents,
+      onRotationSync: _syncRotationFromEngine,
+    );
+
+    // Start match record + reset in-memory stats
+    await ref.read(auditLogServiceProvider).startMatch();
+    ref.read(matchStatsProvider).reset();
+
     _syncRotationFromEngine();
     _layoutFromCanvas(size);
 
     // Default to large court view
-    positionCourtTopTwoThirds();
+    _cameraController?.positionCourtTopTwoThirds();
 
     // Kick after first frame
     add(
-      TimerComponent(period: 0.05, removeOnFinish: true, onTick: _requestStep),
+      TimerComponent(period: 0.05, removeOnFinish: true, onTick: () => _simCoordinator?.requestStep()),
     );
   }
 
@@ -317,8 +310,74 @@ class MatchGame extends FlameGame
 
     overlays.add('srToggle');
 
-    overlays.addEntry('liveLog', (context, game) => const LiveLogOverlay());
-    overlays.add('liveLog');
+    // Defense floor tactics toggle & overlay (top-left, mirrors srDebug pattern)
+    overlays.addEntry(
+      'dfToggle',
+      (context, game) => SafeArea(
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Material(
+              color: Colors.black54,
+              shape: const StadiumBorder(),
+              child: IconButton(
+                icon: const Icon(Icons.shield, size: 20, color: Colors.white),
+                tooltip: 'Defense Floor Tactics',
+                onPressed: () {
+                  if (overlays.isActive('dfDebug')) {
+                    overlays.remove('dfDebug');
+                  } else {
+                    overlays.add('dfDebug');
+                  }
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlays.addEntry(
+      'dfDebug',
+      (context, game) => DefenseFloorOverlay(
+        getCurrentRotationIndex: rotationIndexForSide,
+        onClose: () => overlays.remove('dfDebug'),
+      ),
+    );
+
+    overlays.add('dfToggle');
+
+    // Audit log display (replaces raw debug log)
+    overlays.addEntry('auditLog', (context, game) => const LiveLogOverlay());
+    overlays.add('auditLog');
+
+    // Stats overlay + toggle button
+    overlays.addEntry(
+      'statsToggle',
+      (context, game) => Positioned(
+        top: 8,
+        right: 52,
+        child: Material(
+          color: Colors.black54,
+          shape: const CircleBorder(),
+          child: IconButton(
+            tooltip: 'Match Stats',
+            icon: const Icon(Icons.bar_chart, color: Colors.white),
+            onPressed: () {
+              if (overlays.isActive('stats')) {
+                overlays.remove('stats');
+              } else {
+                overlays.add('stats');
+              }
+            },
+          ),
+        ),
+      ),
+    );
+    overlays.add('statsToggle');
+
+    overlays.addEntry('stats', (context, game) => const StatsOverlay());
   }
 
   @override
@@ -331,320 +390,92 @@ class MatchGame extends FlameGame
     return KeyEventResult.ignored;
   }
 
-  // ----------------- Camera controls (public) -----------------
-  /// Snap camera to center of current canvas with optional zoom.
-  void centerCourt({double? zoom}) {
-    final cam = cameraComp;
-    if (cam == null) return;
-    cam.viewfinder
-      ..anchor = Anchor.center
-      ..position = Vector2(size.x / 2, size.y / 2);
-    if (zoom != null) {
-      cam.viewfinder.zoom = zoom.clamp(minZoom, maxZoom);
-    }
-  }
+  // ----------------- Camera controls (public) - Delegated to CameraController -----------------
+  void centerCourt({double? zoom}) => _cameraController?.centerCourt(zoom: zoom);
+  void fitCourtToWidth() => _cameraController?.fitCourtToWidth();
+  void pinCourtTopLeft({double? zoom}) => _cameraController?.pinCourtTopLeft(zoom: zoom);
+  void setCourtZoom(double z) => _cameraController?.setCourtZoom(z);
+  void positionCourtTopLeftQuarter({double padding = 50.0, bool restorePrevious = true}) =>
+      _cameraController?.positionCourtTopLeftQuarter(padding: padding, restorePrevious: restorePrevious);
+  void positionCourtTopTwoThirds({double padding = 96.0}) =>
+      _cameraController?.positionCourtTopTwoThirds(padding: padding);
 
-  /// Fit full court width to viewport, then center.
-  void fitCourtToWidth() {
-    final cam = cameraComp;
-    if (cam == null) return;
-    cam.viewfinder.zoom = _computeZoomToFitWidth();
-    centerCourt();
-  }
-
-  /// Pin world origin to top-left of the screen (tactical view), optional zoom.
-  void pinCourtTopLeft({double? zoom}) {
-    final cam = cameraComp;
-    if (cam == null) return;
-    cam.viewfinder
-      ..anchor = Anchor.topLeft
-      ..position = Vector2.zero();
-    if (zoom != null) {
-      cam.viewfinder.zoom = zoom.clamp(minZoom, maxZoom);
-    }
-  }
-
-  /// Set explicit zoom.
-  void setCourtZoom(double z) {
-    final cam = cameraComp;
-    if (cam == null) return;
-    cam.viewfinder.zoom = z.clamp(minZoom, maxZoom);
-  }
-
-  /// Position court in top-left quarter with padding
-  void positionCourtTopLeftQuarter({double padding = 50.0, bool restorePrevious = true}) {
-    final cam = cameraComp;
-    if (cam == null) return;
-
-    // If we have a previous position saved and should restore it, use that
-    if (restorePrevious && _smallCourtPosition != null && _smallCourtZoom != null) {
-      cam.viewfinder.zoom = _smallCourtZoom!;
-      cam.viewfinder.position = _smallCourtPosition!.clone();
-      return;
-    }
-
-    // Court should fit in top-left quadrant (half screen width, half screen height)
-    final quadrantWidth = size.x / 2;
-    final quadrantHeight = size.y / 2;
-    final courtWidth = _courtBounds.width;
-    final courtHeight = _courtBounds.height;
-
-    // Calculate zoom to fit court in quadrant with padding
-    final zoomX = (quadrantWidth - padding * 2) / courtWidth;
-    final zoomY = (quadrantHeight - padding * 2) / courtHeight;
-    final zoom = zoomX < zoomY ? zoomX : zoomY;
-
-    cam.viewfinder.zoom = zoom.clamp(minZoom, maxZoom);
-
-    // Calculate where court should appear on screen
-    final courtWidthOnScreen = courtWidth * zoom;
-    final courtHeightOnScreen = courtHeight * zoom;
-
-    // We want court edges at 'padding' pixels from screen edges
-    // So court center should be at (padding + courtWidth/2) on screen
-    final targetScreenX = padding + courtWidthOnScreen / 2;
-    final targetScreenY = padding + courtHeightOnScreen / 2;
-
-    // Camera looks at center of viewport, convert target screen pos to world pos
-    // World offset = (target screen pos - viewport center) / zoom
-    final worldOffsetX = (targetScreenX - size.x / 2) / zoom;
-    final worldOffsetY = (targetScreenY - size.y / 2) / zoom;
-
-    final position = Vector2(
-      _courtBounds.left + _courtBounds.width / 2 - worldOffsetX,
-      _courtBounds.top + _courtBounds.height / 2 - worldOffsetY,
-    );
-
-    cam.viewfinder.position = position;
-    _smallCourtPosition = position.clone();
-    _smallCourtZoom = cam.viewfinder.zoom;
-  }
-
-  /// Position court in top 2/3 of screen with padding
-  void positionCourtTopTwoThirds({double padding = 96.0}) {
-    final cam = cameraComp;
-    if (cam == null) return;
-
-    // Calculate zoom to fit court width with padding
-    final availableWidth = size.x;
-    final courtWidth = _courtBounds.width;
-
-    // Make court slightly thinner by increasing effective padding
-    final effectivePadding = padding * 1.2;
-    final zoom = (availableWidth - effectivePadding * 2) / courtWidth;
-
-    cam.viewfinder.zoom = zoom.clamp(minZoom, maxZoom);
-
-    // Calculate court dimensions on screen
-    final courtWidthOnScreen = courtWidth * zoom;
-    final courtHeightOnScreen = _courtBounds.height * zoom;
-
-    // Calculate actual horizontal padding (space left after court fits on screen)
-    final actualHorizontalPadding = (availableWidth - courtWidthOnScreen) / 2;
-
-    // Use same padding for top - court top edge at actualHorizontalPadding pixels from top
-    final courtCenterScreenY = actualHorizontalPadding + courtHeightOnScreen / 2;
-
-    // Camera viewfinder.position is in world coordinates
-    // To position court center at courtCenterScreenY on screen:
-    // We need to offset the camera from the court's world center
-    final screenCenterY = size.y / 2;
-    final offsetFromScreenCenter = courtCenterScreenY - screenCenterY;
-
-    // Convert screen offset to world offset
-    final worldYOffset = offsetFromScreenCenter / zoom;
-
-    cam.viewfinder.position = Vector2(
-      _courtBounds.left + _courtBounds.width / 2, // horizontally centered
-      _courtBounds.top + _courtBounds.height / 2 - worldYOffset,
-    );
-  }
-
-  // ----------------- Gestures: drag to pan, pinch to zoom -----------------
+  // ----------------- Gestures - Delegated to CameraController -----------------
   @override
-  void onScaleStart(ScaleStartInfo info) {
-    if (!_gesturesEnabled) return;
-
-    final cam = cameraComp;
-    if (cam == null) return;
-    _zoomAtGestureStart = cam.viewfinder.zoom;
-
-    // Get the focal point in screen coordinates
-    try {
-      final focalPoint = (info.eventPosition as dynamic).global;
-      if (focalPoint is Offset) {
-        _lastFingerPosition = Vector2(focalPoint.dx, focalPoint.dy);
-      } else if (focalPoint is Vector2) {
-        _lastFingerPosition = focalPoint.clone();
-      }
-    } catch (_) {
-      _lastFingerPosition = null;
-    }
-  }
+  void onScaleStart(ScaleStartInfo info) => _cameraController?.onScaleStart(info);
 
   @override
-  void onScaleUpdate(ScaleUpdateInfo info) {
-    if (!_gesturesEnabled) return;
-
-    final cam = cameraComp;
-    if (cam == null) return;
-
-    final double scaleFactor = _asScaleFromInfo(info.scale);
-
-    // Compute minimum zoom to ensure court width is at least 1/2 screen width
-    final courtWidth = _courtBounds.width;
-    final screenWidth = size.x;
-    final minZoomForCourtSize = courtWidth > 0 ? (screenWidth / 2) / courtWidth : minZoom;
-    final effectiveMinZoom = minZoomForCourtSize.clamp(minZoom, maxZoom);
-
-    // Update zoom
-    final newZoom = (_zoomAtGestureStart * scaleFactor).clamp(effectiveMinZoom, maxZoom);
-    cam.viewfinder.zoom = newZoom;
-
-    // Get current finger position in screen coordinates
-    Vector2? currentFingerPos;
-    try {
-      final focalPoint = (info.eventPosition as dynamic).global;
-      if (focalPoint is Offset) {
-        currentFingerPos = Vector2(focalPoint.dx, focalPoint.dy);
-      } else if (focalPoint is Vector2) {
-        currentFingerPos = focalPoint.clone();
-      }
-    } catch (_) {}
-
-    // If we have both positions, move camera based on finger movement
-    if (_lastFingerPosition != null && currentFingerPos != null) {
-      final fingerDelta = currentFingerPos - _lastFingerPosition!;
-      print('👆 Finger delta: $fingerDelta, last: $_lastFingerPosition, current: $currentFingerPos');
-
-      // Move camera opposite to finger movement (pan feels natural this way)
-      final currentPos = cam.viewfinder.position;
-      final newPos = currentPos - fingerDelta;
-
-      // Constrain panning based on zoom level
-      // Calculate viewport size in world coordinates
-      final viewportWidth = size.x / cam.viewfinder.zoom;
-      final viewportHeight = size.y / cam.viewfinder.zoom;
-
-      // Use court bounds with some extra margin for panning
-      // Allow panning so court edges can reach screen edges
-      final paddedLeft = _courtBounds.left - courtPadding;
-      final paddedRight = _courtBounds.right + courtPadding;
-      final paddedTop = _courtBounds.top - courtPadding;
-      final paddedBottom = _courtBounds.bottom + courtPadding;
-
-      final paddedWidth = paddedRight - paddedLeft;
-      final paddedHeight = paddedBottom - paddedTop;
-
-      // Only apply bounds if zoomed in enough (viewport smaller than padded area)
-      Vector2 finalPos;
-      if (viewportWidth < paddedWidth && viewportHeight < paddedHeight) {
-        // Zoomed in - apply bounds to keep court in view
-        final minX = paddedLeft + viewportWidth / 2;
-        final maxX = paddedRight - viewportWidth / 2;
-        final minY = paddedTop + viewportHeight / 2;
-        final maxY = paddedBottom - viewportHeight / 2;
-
-        finalPos = Vector2(
-          newPos.x.clamp(minX, maxX),
-          newPos.y.clamp(minY, maxY),
-        );
-      } else {
-        // Zoomed out - no bounds, allow free panning
-        finalPos = newPos;
-      }
-
-      cam.viewfinder.position = finalPos;
-
-      // Update last position
-      _lastFingerPosition = currentFingerPos;
-    }
-  }
+  void onScaleUpdate(ScaleUpdateInfo info) => _cameraController?.onScaleUpdate(info);
 
   @override
-  void onScaleEnd(ScaleEndInfo info) {
-    if (!_gesturesEnabled) return;
-    _lastFingerPosition = null;
-  }
+  void onScaleEnd(ScaleEndInfo info) => _cameraController?.onScaleEnd(info);
 
   double _computeZoomToFitWidth() {
-    final vpSize = cameraComp?.viewport.size ?? size; // fallback to canvas size
+    final vpSize = cameraComp?.viewport.size ?? size;
     if (vpSize.x == 0) return 1.0;
-    // Keep simple; your court is already fitted within _courtRectFromCanvas.
-    return 1.0.clamp(minZoom, maxZoom);
+    return 1.0;
   }
 
-  // ----------------- Engine event handling -----------------
+  // ----------------- Engine event handling - Delegated to EventHandler with serve callback -----------------
   void _handleEvents(List<EngineEvent> events) {
-    final queued = <MoveCommand>[];
+    // First, delegate to EventHandler to process all events
+    _eventHandler?.handleEvents(events);
 
+    // Animate all players to serve/receive formation on phase/rotation changes.
+    // Skip setting, attack, and reception — those have dedicated animations.
     for (final e in events) {
-      e.when(
-        serveBallFlight: (fromSide, durationSec) {
-          if (_serveInFlight) return;
-          _serveInFlight = true;
-
-          bool finished = false;
-          void finishOnce() {
-            if (finished) return;
-            finished = true;
-            _serveInFlight = false;
-            _requestStep();
-          }
-
-          _animateServe(
-            fromSide: fromSide,
-            durationSec: durationSec,
-            onDone: finishOnce,
-          );
-
-          // watchdog
-          Future.delayed(
-            Duration(milliseconds: (durationSec * 1000).ceil() + 100),
-            finishOnce,
-          );
-        },
-        playerMove: (playerId, toX, toY, durationSec) {
-          queued.add(
-            MoveCommand(
-              playerId: playerId,
-              to: Offset(toX, toY),
-              durationSec: durationSec,
-            ),
-          );
-        },
-        scoreChanged: (home, away) {},
-        rotationAdvanced: (rotationTick, serverSide) {
-          _rotationTick = rotationTick;
-          _layoutFromCanvas(size);
-        },
-        phaseChanged: (phase, rallyId) {
-          if (phase == MatchPhase.preServe) {
-            _serveInFlight = false;
-            _requestStep();
-            return;
-          }
-          if (phase != MatchPhase.serve) {
-            _requestStep();
-          }
-        },
-        rallyEnded: (pointTo, rallyId) {
-          _serveInFlight = false;
-          Future.delayed(const Duration(seconds: 3), () {
-            if (!isMounted) return;
-            _requestStep();
-          });
-        },
-      );
+      if (e is RotationAdvanced) {
+        _animateAllPlayersToFormation();
+      } else if (e is PhaseChanged &&
+          e.phase != MatchPhase.setting &&
+          e.phase != MatchPhase.attack &&
+          e.phase != MatchPhase.reception) {
+        _animateAllPlayersToFormation();
+      }
     }
 
-    if (queued.isNotEmpty) {
-      _moveScheduler.startSimultaneous(queued);
+    // Update live score in stats notifier
+    for (final e in events) {
+      if (e is ScoreChanged) {
+        ref.read(matchStatsProvider).updateScore(e.home, e.away);
+      }
+    }
+
+    // Handle ball animations and phase-specific player moves
+    for (final e in events) {
+      if (e is ServeBallFlight) {
+        _animateServe(
+          fromSide: e.fromSide,
+          durationSec: e.durationSec,
+          onDone: () {
+            _eventHandler?.resetServeState();
+            _simCoordinator?.requestStep();
+          },
+        );
+      } else if (e is PhaseChanged && e.phase == MatchPhase.setting) {
+        // Ball was received — animate it from landing zone to setter area
+        _animatePassToSetter(onDone: () => _simCoordinator?.requestStep());
+      } else if (e is PhaseChanged && e.phase == MatchPhase.dig) {
+        // Attack was dug — animate ball from attack contact to dig position
+        _animateDigTransition(onDone: () => _simCoordinator?.requestStep());
+      } else if (e is PhaseChanged && e.phase == MatchPhase.attack) {
+        // Ball was set — animate it from setter to attack contact point
+        _animateSetToAttacker(onDone: () => _simCoordinator?.requestStep());
+      } else if (e is RallyEnded) {
+        _animateBallBounce();
+      } else if (e is PhaseChanged && e.phase == MatchPhase.preServe) {
+        _attackedThisRally = false;
+        _moveBallToServePosition();
+      }
     }
   }
 
   void _syncRotationFromEngine() {
     _rotationTick = sim.state.rotationTick;
+    ref.read(matchDebugStateProvider).update(
+      home: rotationIndexForSide(TeamSide.home),
+      away: rotationIndexForSide(TeamSide.away),
+    );
   }
 
   // For debug overlay (UI expects 1..6)
@@ -673,189 +504,53 @@ class MatchGame extends FlameGame
 
   TeamSide get _serverSide => sim.state.serverSide;
 
-  Rect _courtRectFromCanvas(Vector2 canvasSize) {
-    final arena = Rect.fromLTWH(
-      courtPadding,
-      courtPadding,
-      canvasSize.x - courtPadding * 2,
-      canvasSize.y - courtPadding * 2,
-    );
-    const aspect = 18 / 9;
-    late double w, h;
-    if (arena.width / arena.height >= aspect) {
-      h = arena.height;
-      w = h * aspect;
-    } else {
-      w = arena.width;
-      h = w / aspect;
-    }
-    final fitted = Rect.fromLTWH(
-      arena.left + (arena.width - w) / 2,
-      arena.top + (arena.height - h) / 2,
-      w,
-      h,
-    );
-    const scale = 0.70;
-    return Rect.fromLTWH(
-      fitted.left + fitted.width * (1 - scale) / 2,
-      fitted.top + fitted.height * (1 - scale) / 2,
-      fitted.width * scale,
-      fitted.height * scale,
-    );
-  }
+  // Court rect and half rect methods moved to LayoutManager
 
-  Rect _halfRect(Rect court, TeamSide side) {
-    final cx = court.left + court.width / 2;
-    return (side == TeamSide.home)
-        ? Rect.fromLTRB(court.left, court.top, cx, court.bottom)
-        : Rect.fromLTRB(cx, court.top, court.right, court.bottom);
-  }
-
+  // ----------------- Layout - Delegated to LayoutManager -----------------
   void _layoutFromCanvas(Vector2 canvasSize) {
-    final court = _courtRectFromCanvas(canvasSize);
+    final layoutManager = _layoutManager;
+    if (layoutManager == null) return; // Not initialized yet
+
+    final court = layoutManager.computeCourtRect(canvasSize);
     _courtBounds = court; // Update bounds for camera constraints
 
-    final serving = _serverSide;
-    final rotHome = rotationIndexForSide(TeamSide.home);
-    final rotAway = rotationIndexForSide(TeamSide.away);
-
-    // --- SERVE layouts (serve tactic currently fixed to "default")
-    final serveHome = positionResolver.resolveRoles(
-      phase: 'serve',
-      side: TeamSide.home,
-      rotationIndex1to6: rotHome,
-      courtRect: court,
-      tactic: 'default',
+    layoutManager.updateLayout(
+      canvasSize: canvasSize,
+      serverSide: _serverSide,
+      rotationTick: _rotationTick,
+      getRotationIndex: rotationIndexForSide,
     );
-    final serveAway = positionResolver.resolveRoles(
-      phase: 'serve',
-      side: TeamSide.away,
-      rotationIndex1to6: rotAway,
-      courtRect: court,
-      tactic: 'default',
-    );
-
-    // --- RECEIVE layouts (tactic-aware)
-    final homeSpec = ref
-        .read(tacticsProvider.notifier)
-        .getSpec(TeamSide.home, rotHome);
-    final awaySpec = ref
-        .read(tacticsProvider.notifier)
-        .getSpec(TeamSide.away, rotAway);
-
-    final recvHome = positionResolver.resolveRoles(
-      phase: 'receive',
-      side: TeamSide.home,
-      rotationIndex1to6: rotHome,
-      courtRect: court,
-      tactic: receiveTacticSuffix(homeSpec),
-    );
-    final recvAway = positionResolver.resolveRoles(
-      phase: 'receive',
-      side: TeamSide.away,
-      rotationIndex1to6: rotAway,
-      courtRect: court,
-      tactic: receiveTacticSuffix(awaySpec),
-    );
-
-    Map<String, int> tagToId(List<PlayerLite> roster) =>
-        _roleTagToPlayerId(roster);
-
-    void placeFromRoleMap(
-      Map<String, Offset> baseRoles,
-      List<PlayerLite> roster,
-    ) {
-      final ids = tagToId(roster);
-      final onCourt = <int>{};
-
-      baseRoles.forEach((tag, pos) {
-        final pid = ids[tag];
-        if (pid == null) return;
-        _playerNodes[pid]
-          ?..position = Vector2(pos.dx, pos.dy)
-          ..setHidden(false)
-          ..setRoleLabel(tag);
-        onCourt.add(pid);
-      });
-
-      for (final p in roster) {
-        if (!onCourt.contains(p.id)) _playerNodes[p.id]?.setHidden(true);
-      }
-    }
-
-    void placeReceiving(TeamSide side) {
-      final rot = side == TeamSide.home ? rotHome : rotAway;
-      final roster = side == TeamSide.home ? homePlayers : awayPlayers;
-
-      // 1) Which tactic key is active?
-      final specRaw = ref.read(tacticsProvider.notifier).getSpec(side, rot);
-
-      // 2) Get base ROLE POSITIONS from the PositionBook for that tactic.
-      final baseRoles = positionResolver.resolveRoles(
-        phase: 'receive',
-        side: side,
-        rotationIndex1to6: rot,
-        courtRect: court,
-        tactic: receiveTacticSuffix(specRaw),
-      ); // Map<String, Offset>
-
-      // 3) Only compute planner overrides if the book gave us nothing.
-      Map<int, Offset> overrides = const {};
-      if (baseRoles.isEmpty) {
-        final planner = ServeReceivePlanner(positionResolver);
-        final plan = planner.plan(
-          side: side,
-          rotationIndex1to6: rot,
-          courtRect: court,
-          spec: ServeReceiveTacticSpec(
-            numPassers: specRaw.numPassers,
-            passingRoles: specRaw.passingRoles,
-          ),
-          roleTagToPlayerId: _roleTagToPlayerId(roster),
-        );
-        overrides = plan.receiveSpots;
-      }
-
-      // 4) Place players
-      final tagToId = _roleTagToPlayerId(roster);
-      final onCourt = <int>{};
-      baseRoles.forEach((tag, basePos) {
-        final pid = tagToId[tag];
-        if (pid == null) return;
-
-        final finalPos = overrides[pid] ?? basePos; // book wins if present
-        _playerNodes[pid]
-          ?..position = Vector2(finalPos.dx, finalPos.dy)
-          ..setHidden(false)
-          ..setRoleLabel(tag);
-        onCourt.add(pid);
-      });
-      for (final p in roster) {
-        if (!onCourt.contains(p.id)) _playerNodes[p.id]?.setHidden(true);
-      }
-    }
-
-    if (serving == TeamSide.home) {
-      placeFromRoleMap(serveHome, homePlayers);
-      placeReceiving(TeamSide.away);
-    } else {
-      placeFromRoleMap(serveAway, awayPlayers);
-      placeReceiving(TeamSide.home);
-    }
-
-    overlay
-      ..courtRect = court
-      ..rotationTick = _rotationTick
-      ..servingLabel = _serverSide == TeamSide.home ? 'HOME' : 'AWAY';
   }
 
-  // ----------------- Serve animation using ServeTargetPlanner -----------------
+  // ----------------- Player formation animation -----------------
+
+  /// Animates all 12 players to their serve/receive formation positions.
+  /// Called on every phase change so players continuously move into position.
+  void _animateAllPlayersToFormation() {
+    final lm = _layoutManager;
+    if (lm == null) return;
+    final moves = lm.buildFormationMoves(
+      canvasSize: size,
+      serverSide: _serverSide,
+      getRotationIndex: rotationIndexForSide,
+      durationSec: 0.45,
+    );
+    if (moves.isNotEmpty) {
+      _moveScheduler.startSimultaneous(moves);
+    }
+  }
+
+  // ----------------- Serve animation - Uses LayoutManager -----------------
   void _animateServe({
     required TeamSide fromSide,
     required double durationSec,
     required VoidCallback onDone,
   }) {
-    final court = _courtRectFromCanvas(size);
+    final layoutManager = _layoutManager;
+    final eventHandler = _eventHandler;
+    if (layoutManager == null || eventHandler == null) return;
+
+    final court = layoutManager.computeCourtRect(size);
     final recvSide = _other(fromSide);
 
     // Start: serve anchor from PositionBook (serve tactic is "default")
@@ -868,7 +563,7 @@ class MatchGame extends FlameGame
           anchorName: 'server_start',
           tactic: 'default',
         ) ??
-        _fallbackServerStart(court, fromSide);
+        layoutManager.getFallbackServerStart(court, fromSide);
 
     // Target: use receiving side's *selected* tactic
     final rotRecv = rotationIndexForSide(recvSide);
@@ -880,33 +575,406 @@ class MatchGame extends FlameGame
       passingRoles: recvSpecRaw.passingRoles,
     );
 
-    final pick = ServeTargetPlanner(positionResolver, rng: _rng).pickTarget(
+    final pick = layoutManager.pickServeTarget(
       toSide: recvSide,
       rotationIndex1to6: rotRecv,
       courtRect: court,
       spec: recvSpec,
     );
 
-    _ball?.serve(
+    // Track where the ball lands so the pass animation can start from there
+    _lastBallLanding = pick.target;
+
+    // Both teams move simultaneously during serve flight:
+    // - Serving team → defense positions
+    // - Receiving team → passer to ball, non-passers to pre-attack positions
+    final defMoves = layoutManager.buildDefenseFormationMoves(
+      canvasSize: size,
+      servingSide: fromSide,
+      rotationIndex: rotationIndexForSide(fromSide),
+      durationSec: durationSec * 0.85,
+    );
+    if (defMoves.isNotEmpty) _moveScheduler.startSimultaneous(defMoves);
+
+    final recvMoves = layoutManager.buildReceptionMoves(
+      canvasSize: size,
+      receivingSide: recvSide,
+      rotationIndex: rotRecv,
+      passingRoles: Set<String>.from(recvSpec.passingRoles),
+      ballLandingZone: pick.target,
+      durationSec: durationSec * 0.90,
+    );
+    if (recvMoves.isNotEmpty) _moveScheduler.startSimultaneous(recvMoves);
+
+    eventHandler.animateServe(
       from: start,
       to: pick.target,
       durationSec: durationSec,
+      onDone: onDone,
+    );
+  }
+
+  // ----------- Pass ball flight (receive zone → setter) -----------
+
+  /// Animates the ball from the serve landing zone to a pass-quality-dependent
+  /// target. Simultaneously moves all players to their pre-attack positions.
+  void _animatePassToSetter({required VoidCallback onDone}) {
+    final lm = _layoutManager;
+    final ball = _ball;
+    if (lm == null || ball == null) { onDone(); return; }
+
+    final court = lm.computeCourtRect(size);
+    // Use sim.possession — correctly tracks who has the ball even after a dig.
+    final attackingSide = sim.possession;
+    final rot = rotationIndexForSide(attackingSide);
+
+    final from = _lastBallLanding ?? _fallbackReceiveZone(court, attackingSide);
+
+    final to = PassLandingCalculator.compute(
+      outcome: sim.lastPassOutcome,
+      receivingSide: attackingSide,
+      receivingHalf: lm.getHalfRect(court, attackingSide),
+      fullCourt: court,
+      rng: _rng,
+    );
+    _lastBallLanding = to;
+
+    final settingMoves = lm.buildSettingFormationMoves(
+      canvasSize: size,
+      attackingSide: attackingSide,
+      rotationIndex: rot,
+      durationSec: 0.50,
+      setterDestination: to,
+    );
+    if (settingMoves.isNotEmpty) _moveScheduler.startSimultaneous(settingMoves);
+
+    ball.fly(
+      from: from,
+      to: to,
+      durationSec: 1.2,
+      fromHeightM: 1.0,
+      toHeightM: 3.0,
+      peakHeightM: 3.0,
+      peakT: 1.0,
+      onComplete: onDone,
+    );
+
+    // 0.6 s into the pass flight, attackers begin their approach runs toward
+    // their attack zones — MB timing is particularly important here.
+    // Skip for rotation-aware first attack (receiving team's first rally attack):
+    // OH and OPP are already in their R1 zone positions and must not be moved
+    // to canonical approach spots before the ball is set.
+    final formations = _attackFormations;
+    final isRotationAwarePass = !_attackedThisRally && attackingSide != _serverSide;
+    if (formations != null && !isRotationAwarePass) {
+      Future.delayed(const Duration(milliseconds: 600), () {
+        final approachMoves = lm.buildPreSetApproachMoves(
+          canvasSize: size,
+          attackingSide: attackingSide,
+          rotationIndex: rot,
+          formations: formations,
+          durationSec: 0.60,
+        );
+        if (approachMoves.isNotEmpty) _moveScheduler.startSimultaneous(approachMoves);
+      });
+    }
+  }
+
+
+  // ----------- Set to attacker -----------
+
+  /// Flies the ball from the setter's position to the attack contact point.
+  /// Height and duration vary by set type (tempo = low/fast, high = tall arc).
+  void _animateSetToAttacker({required VoidCallback onDone}) {
+    final lm = _layoutManager;
+    final ball = _ball;
+    if (lm == null || ball == null) { onDone(); return; }
+
+    // Capture before setting — first attack uses rotation positions, not natural.
+    final isFirstAttack = !_attackedThisRally;
+    _attackedThisRally = true;
+
+    final court = lm.computeCourtRect(size);
+    // Use sim.possession — correctly tracks who has the ball even after a dig.
+    final attackingSide = sim.possession;
+    final rot = rotationIndexForSide(attackingSide);
+
+    final from = _lastBallLanding ?? Offset(ball.position.x, ball.position.y);
+
+    final result = SetLandingCalculator.compute(
+      outcome: sim.lastSetOutcome,
+      attackingSide: attackingSide,
+      attackingHalf: lm.getHalfRect(court, attackingSide),
+      rng: _rng,
+    );
+
+    // Rotation-aware attack position: use the canonical approach y for the set
+    // type on the first attack of a rally (receiving team only). This ensures
+    // the contact point is at the correct pin even when rotation has placed the
+    // attacker in a different zone (e.g. OPP at zone 4 in R1 still attacks
+    // from zone 2, OH2 at zone 3 in R3 still attacks from zone 4).
+    final isRotationAware = isFirstAttack && attackingSide != _serverSide;
+
+    final attackContactPoint = isRotationAware
+        ? (lm.getFirstAttackPosition(
+              canvasSize: size,
+              attackingSide: attackingSide,
+              rotationIndex: rot,
+              setOutcome: sim.lastSetOutcome,
+            ) ?? result.position)
+        : result.position;
+
+    _lastBallLanding = attackContactPoint;
+
+    // Move chosen attacker to the ball and all others to cover positions.
+    final formations = _attackFormations;
+    if (formations != null) {
+      final coverMoves = lm.buildAttackCoverMoves(
+        canvasSize: size,
+        attackingSide: attackingSide,
+        rotationIndex: rot,
+        setOutcome: sim.lastSetOutcome,
+        attackContactPoint: attackContactPoint,
+        formations: formations,
+        durationSec: result.durationSec,
+      );
+      if (coverMoves.isNotEmpty) _moveScheduler.startSimultaneous(coverMoves);
+    }
+
+    // Move defending team to block and floor-defence positions simultaneously.
+    final defendingSide = _other(attackingSide);
+    final defenseMoves = lm.buildDefenseAttackMoves(
+      canvasSize: size,
+      defendingSide: defendingSide,
+      setOutcome: sim.lastSetOutcome,
+      passOutcome: sim.lastPassOutcome,
+      rotationIndex: rotationIndexForSide(defendingSide),
+      durationSec: result.durationSec,
+    );
+    if (defenseMoves.isNotEmpty) _moveScheduler.startSimultaneous(defenseMoves);
+
+    ball.fly(
+      from: from,
+      to: attackContactPoint,
+      durationSec: result.durationSec,
+      fromHeightM: 3.0,
+      toHeightM: result.toHeightM,
+      peakHeightM: result.peakHeightM,
+      peakT: 0.5,
       onComplete: onDone,
     );
   }
+
+  // ----------- Dig transition -----------
+
+  /// Animates the ball from the attack contact point to a back-court dig
+  /// position on the defending team's side. The dig landing zone is derived
+  /// from [sim.lastAttackDirection] using the same zone table as kill shots,
+  /// so the ball visually lands where the defender is standing.
+  ///
+  /// After the animation completes [onDone] fires, which triggers requestStep
+  /// and advances the engine from [MatchPhase.dig] → [MatchPhase.setting].
+  /// [_lastBallLanding] is updated so [_animatePassToSetter] starts correctly.
+  void _animateDigTransition({required VoidCallback onDone}) {
+    final lm = _layoutManager;
+    final ball = _ball;
+    if (lm == null || ball == null) { onDone(); return; }
+
+    final court = lm.computeCourtRect(size);
+    // After the dig, possession has flipped — sim.possession is the digging team.
+    final diggingSide = sim.possession;
+    final from = _lastBallLanding ?? Offset(ball.position.x, ball.position.y);
+
+    // Reuse AttackLandingCalculator zone table to find where the ball lands.
+    final digSpot = AttackLandingCalculator.kill(
+      direction: sim.lastAttackDirection,
+      defendingSide: diggingSide,
+      defendingHalf: lm.getHalfRect(court, diggingSide),
+      rng: _rng,
+    );
+
+    // Fall back to mid-court if direction was atBlock (no floor zone defined).
+    final to = digSpot ?? Offset(
+      lm.getHalfRect(court, diggingSide).center.dx,
+      lm.getHalfRect(court, diggingSide).center.dy,
+    );
+
+    _lastBallLanding = to;
+
+    ball.fly(
+      from: from,
+      to: to,
+      durationSec: 0.55,
+      fromHeightM: 3.0,
+      toHeightM: 1.0,
+      peakHeightM: 3.0,
+      peakT: 0.15,
+      onComplete: onDone,
+    );
+  }
+
+  // ----------- Ball return to serve position -----------
+
+  /// Glides the ball along the ground to the new server's start position.
+  /// Triggered on preServe so the rotation has already been updated.
+  void _moveBallToServePosition() {
+    final ball = _ball;
+    final lm = _layoutManager;
+    if (ball == null || lm == null) return;
+
+    final court = lm.computeCourtRect(size);
+    final serverSide = _serverSide;
+    final rot = rotationIndexForSide(serverSide);
+
+    final dest =
+        positionResolver.resolveAnchor(
+          phase: 'serve',
+          side: serverSide,
+          rotationIndex1to6: rot,
+          courtRect: court,
+          anchorName: 'server_start',
+          tactic: 'default',
+        ) ??
+        lm.getFallbackServerStart(court, serverSide);
+
+    final from = Offset(ball.position.x, ball.position.y);
+
+    ball.fly(
+      from: from,
+      to: dest,
+      durationSec: 1.0,
+      fromHeightM: 0.0,
+      toHeightM: 0.0,
+      peakHeightM: 0.0,
+      peakT: 0.5,
+    );
+  }
+
+  // ----------- End-of-rally bounce -----------
+
+  /// Animates the ball at the end of a rally.
+  ///
+  /// - Overpass / shank: fly to bad-pass landing, leave there.
+  /// - Attack kill:      fly from contact point to direction zone in defending half.
+  /// - Attack blocked:   deflect back to attacking side near the net.
+  /// - Attack error:     stay at contact point.
+  /// - Other (fault):    bounce at last ball position.
+  void _animateBallBounce() {
+    final ball = _ball;
+    final lm = _layoutManager;
+    if (ball == null || lm == null) return;
+
+    final passOutcome = sim.lastPassOutcome;
+
+    // ── Overpass / shank ─────────────────────────────────────────────────
+    if (passOutcome == PassOutcome.overpass || passOutcome == PassOutcome.shank) {
+      final from = _lastBallLanding;
+      if (from == null) return;
+      final court = lm.computeCourtRect(size);
+      final receivingSide = _other(_serverSide);
+      final to = PassLandingCalculator.compute(
+        outcome: passOutcome,
+        receivingSide: receivingSide,
+        receivingHalf: lm.getHalfRect(court, receivingSide),
+        fullCourt: court,
+        rng: _rng,
+      );
+      _lastBallLanding = to;
+      ball.fly(
+        from: from,
+        to: to,
+        durationSec: 0.8,
+        fromHeightM: 1.0,
+        toHeightM: passOutcome == PassOutcome.overpass ? 2.5 : 0.0,
+        peakHeightM: passOutcome == PassOutcome.overpass ? 3.5 : 1.5,
+        peakT: 0.5,
+      );
+      return;
+    }
+
+    // ── Attack phase outcome ──────────────────────────────────────────────
+    if (_attackedThisRally) {
+      final from = _lastBallLanding;
+      if (from == null) return;
+      final court = lm.computeCourtRect(size);
+      final attackingSide = _other(_serverSide);
+      final defendingSide = _serverSide;
+
+      switch (sim.lastAttackOutcome) {
+        case AttackOutcome.kill:
+          final landing = AttackLandingCalculator.kill(
+            direction: sim.lastAttackDirection,
+            defendingSide: defendingSide,
+            defendingHalf: lm.getHalfRect(court, defendingSide),
+            rng: _rng,
+          );
+          if (landing != null) {
+            _lastBallLanding = landing;
+            ball.fly(
+              from: from,
+              to: landing,
+              durationSec: 0.45,
+              fromHeightM: 3.0,
+              toHeightM: 0.0,
+              peakHeightM: 1.2,
+              peakT: 0.25,
+              onComplete: () =>
+                  ball.bounce(at: landing, fromHeightM: 0.3, durationSec: 1.5),
+            );
+          } else {
+            // atBlock direction — treat as blocked back
+            ball.bounce(at: from, fromHeightM: 0.5, durationSec: 2.0);
+          }
+
+        case AttackOutcome.blocked:
+          final landing = AttackLandingCalculator.blocked(
+            attackingSide: attackingSide,
+            attackingHalf: lm.getHalfRect(court, attackingSide),
+            rng: _rng,
+          );
+          _lastBallLanding = landing;
+          ball.fly(
+            from: from,
+            to: landing,
+            durationSec: 0.40,
+            fromHeightM: 3.0,
+            toHeightM: 0.5,
+            peakHeightM: 1.5,
+            peakT: 0.5,
+            onComplete: () =>
+                ball.bounce(at: landing, fromHeightM: 0.3, durationSec: 1.5),
+          );
+
+        case AttackOutcome.error:
+          // Ball hits net or goes out — stays near attack contact.
+          ball.bounce(at: from, fromHeightM: 0.5, durationSec: 2.0);
+
+        case AttackOutcome.dug:
+          // dug doesn't reach rallyEnded — no-op guard.
+          break;
+      }
+      return;
+    }
+
+    // ── Default: serve fault or other non-attack ending ───────────────────
+    final landing = _lastBallLanding;
+    if (landing == null) return;
+    ball.bounce(at: landing, fromHeightM: 0.5, durationSec: 2.0);
+  }
+
+  // ----------- Position helpers -----------
+
+  Offset _fallbackReceiveZone(Rect court, TeamSide side) {
+    final half = _layoutManager!.getHalfRect(court, side);
+    return Offset(half.left + half.width * 0.2, half.top + half.height * 0.5);
+  }
+
 
   // ----------------- Helpers -----------------
   TeamSide _other(TeamSide s) =>
       s == TeamSide.home ? TeamSide.away : TeamSide.home;
 
-  Offset _fallbackServerStart(Rect court, TeamSide side) {
-    final half = _halfRect(court, side);
-    final y = half.top + half.height * 0.75;
-    final x = side == TeamSide.home
-        ? half.left - court.width * 0.06
-        : half.right + court.width * 0.06;
-    return Offset(x, y);
-  }
+  // Fallback server start moved to LayoutManager
 
   @override
   void onGameResize(Vector2 canvasSize) {
@@ -920,61 +988,4 @@ class MatchGame extends FlameGame
   }
 }
 
-extension _VmOffsetX on Offset {
-  Vector2 toV2() => Vector2(dx, dy);
-}
-
-extension _VmVector2X on Vector2 {
-  Offset toOff() => Offset(x, y);
-}
-
-Vector2 _asVector2FromDelta(dynamic delta) {
-  // Try accessing global property (EventDelta)
-  try {
-    final d = delta as dynamic;
-    if (d.global != null) {
-      if (d.global is Offset) {
-        final Offset g = d.global as Offset;
-        return Vector2(g.dx, g.dy);
-      } else if (d.global is Vector2) {
-        return d.global as Vector2;
-      }
-    }
-  } catch (_) {}
-
-  // Already a Vector2
-  try {
-    return delta as Vector2;
-  } catch (_) {}
-
-  // Direct Offset
-  try {
-    final Offset o = delta as Offset;
-    return Vector2(o.dx, o.dy);
-  } catch (_) {}
-
-  return Vector2.zero();
-}
-
-double _asScaleFromInfo(dynamic scale) {
-  // Try accessing global property (EventDelta with Vector2)
-  try {
-    final s = scale as dynamic;
-    if (s.global != null) {
-      // Handle Vector2 scale - use the x component
-      if (s.global is Vector2) {
-        final Vector2 v = s.global as Vector2;
-        return v.x.toDouble();
-      } else if (s.global is num) {
-        return (s.global as num).toDouble();
-      }
-    }
-  } catch (_) {}
-
-  // Already num/double
-  try {
-    return (scale as num).toDouble();
-  } catch (_) {}
-
-  return 1.0;
-}
+// Helper functions moved to CameraController

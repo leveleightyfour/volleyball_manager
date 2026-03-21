@@ -1,7 +1,6 @@
 // lib/features/match/engine/sim/sim_controller.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:volleyball_manager/shared/log/live_log.dart';
 import '../../state/match_state.dart';
 import '../events/events.dart';
 import '../outcomes/outcomes.dart';
@@ -18,6 +17,21 @@ class SimController {
   }
 
   MatchState get state => _state;
+  PassOutcome get lastPassOutcome => _strategy.lastPassOutcome;
+  SetOutcome get lastSetOutcome => _strategy.lastSetOutcome;
+
+  /// The team currently in possession (about to set/attack).
+  /// Updated on every serve, dig, and rally reset — always current.
+  TeamSide get possession => _possession;
+
+  /// Quality of the transition touch from the last dug attack.
+  /// Drives set options in the subsequent setting phase.
+  TransitionOutcome get lastTransitionOutcome => _strategy.lastTransitionOutcome;
+
+  /// True when the setter received the dug ball and cannot set next rally.
+  bool get setterDidDig => _strategy.setterDidDig;
+  AttackDirection get lastAttackDirection => _strategy.lastAttackDirection;
+  AttackOutcome get lastAttackOutcome => _strategy.lastAttackOutcome;
   MatchState _state;
 
   final OutcomeStrategy _strategy;
@@ -30,15 +44,9 @@ class SimController {
     final events = <EngineEvent>[];
     var s = _state;
 
-    log.i(
-      read,
-      '[CTRL] phase=${s.phase} rally=${s.rallyId} server=${s.serverSide}',
-    );
-
     switch (s.phase) {
       case MatchPhase.preServe:
         _possession = s.serverSide; // reset each rally
-        log.i(read, '[CTRL] → serve: emit serveBallFlight');
         events.add(
           EngineEvent.phaseChanged(phase: MatchPhase.serve, rallyId: s.rallyId),
         );
@@ -51,10 +59,10 @@ class SimController {
       case MatchPhase.serve:
         {
           final so = await _strategy.getServeOutcome(s);
-          log.i(read, '[CTRL] serve outcome=$so');
           if (so == null) return (state: s, events: events);
 
           if (so == ServeOutcome.fault) {
+            // Serve fault → receiver gets point + rotation
             final receiver = _other(s.serverSide);
             final newScore = _addPoint(s.score, receiver);
             final nextTick = s.rotationTick + 1;
@@ -99,23 +107,27 @@ class SimController {
       case MatchPhase.reception:
         {
           final po = await _strategy.getPassOutcome(s);
-          log.i(read, '[CTRL] pass outcome=$po');
           if (po == null) return (state: s, events: events);
 
-          events.add(
-            EngineEvent.phaseChanged(
-              phase: MatchPhase.setting,
-              rallyId: s.rallyId,
-            ),
-          );
-          s = s.copyWith(phase: MatchPhase.setting);
+          if (po == PassOutcome.overpass || po == PassOutcome.shank) {
+            // Serving team wins the point — same as an ace, no rotation change.
+            final server = s.serverSide;
+            final newScore = _addPoint(s.score, server);
+            events.add(EngineEvent.scoreChanged(home: newScore.home, away: newScore.away));
+            events.add(EngineEvent.rallyEnded(pointTo: server, rallyId: s.rallyId));
+            s = s.copyWith(score: newScore, phase: MatchPhase.rallyEnd);
+          } else {
+            events.add(
+              EngineEvent.phaseChanged(phase: MatchPhase.setting, rallyId: s.rallyId),
+            );
+            s = s.copyWith(phase: MatchPhase.setting);
+          }
           break;
         }
 
       case MatchPhase.setting:
         {
           final so = await _strategy.getSetOutcome(s);
-          log.i(read, '[CTRL] set outcome=$so');
           if (so == null) return (state: s, events: events);
 
           // You could enqueue playerMove for hitters/setter here.
@@ -132,7 +144,6 @@ class SimController {
       case MatchPhase.attack:
         {
           final atk = await _strategy.getAttackOutcome(s);
-          log.i(read, '[CTRL] attack outcome=$atk');
           if (atk == null) return (state: s, events: events);
 
           if (atk == AttackOutcome.kill) {
@@ -189,29 +200,87 @@ class SimController {
             );
             s = s.copyWith(score: newScore, phase: MatchPhase.rallyEnd);
           } else {
-            // dug/continue → flip possession and go back to setting
+            // dug/continue → flip possession and go to dig phase
             _possession = _other(_possession);
             events.add(
               EngineEvent.phaseChanged(
-                phase: MatchPhase.setting,
+                phase: MatchPhase.dig,
                 rallyId: s.rallyId,
               ),
             );
-            s = s.copyWith(phase: MatchPhase.setting);
+            s = s.copyWith(phase: MatchPhase.dig);
           }
           break;
         }
 
-      case MatchPhase.rallyEnd:
-        final nextRally = s.rallyId + 1;
-        _possession = s.serverSide; // reset; will switch on inPlay
+      case MatchPhase.dig:
+        // TransitionOutcome already stored in _lastPassOutcome by getAttackOutcome.
+        // Advance to setting so getSetOutcome picks it up.
         events.add(
-          EngineEvent.phaseChanged(
-            phase: MatchPhase.preServe,
-            rallyId: nextRally,
-          ),
+          EngineEvent.phaseChanged(phase: MatchPhase.setting, rallyId: s.rallyId),
         );
-        s = s.copyWith(phase: MatchPhase.preServe, rallyId: nextRally);
+        s = s.copyWith(phase: MatchPhase.setting);
+        break;
+
+      case MatchPhase.rallyEnd:
+        final setWinner = _checkSetWin(s);
+        if (setWinner != null) {
+          final newSetsHome = s.setsHome + (setWinner == TeamSide.home ? 1 : 0);
+          final newSetsAway = s.setsAway + (setWinner == TeamSide.away ? 1 : 0);
+          final matchOver = newSetsHome >= 3 || newSetsAway >= 3;
+
+          if (matchOver) {
+            events.add(EngineEvent.matchEnded(
+              winner: setWinner,
+              setsHome: newSetsHome,
+              setsAway: newSetsAway,
+              finalScoreHome: s.score.home,
+              finalScoreAway: s.score.away,
+            ));
+            s = s.copyWith(
+              setsHome: newSetsHome,
+              setsAway: newSetsAway,
+              isMatchOver: true,
+            );
+          } else {
+            final nextSetNumber = s.setNumber + 1;
+            final nextRally = s.rallyId + 1;
+            // Winner of the set serves first in the next set.
+            final nextTick = setWinner == TeamSide.home ? 0 : 1;
+            events.add(EngineEvent.setEnded(
+              winner: setWinner,
+              setsHome: newSetsHome,
+              setsAway: newSetsAway,
+              setNumber: s.setNumber,
+              finalScoreHome: s.score.home,
+              finalScoreAway: s.score.away,
+            ));
+            events.add(EngineEvent.phaseChanged(
+              phase: MatchPhase.preServe,
+              rallyId: nextRally,
+            ));
+            s = s.copyWith(
+              setsHome: newSetsHome,
+              setsAway: newSetsAway,
+              setNumber: nextSetNumber,
+              score: const Score(),
+              rotationTick: nextTick,
+              serverSide: setWinner,
+              phase: MatchPhase.preServe,
+              rallyId: nextRally,
+            );
+          }
+        } else {
+          final nextRally = s.rallyId + 1;
+          _possession = s.serverSide; // reset; will switch on inPlay
+          events.add(
+            EngineEvent.phaseChanged(
+              phase: MatchPhase.preServe,
+              rallyId: nextRally,
+            ),
+          );
+          s = s.copyWith(phase: MatchPhase.preServe, rallyId: nextRally);
+        }
         break;
     }
 
@@ -221,6 +290,17 @@ class SimController {
 }
 
 // ---------- helpers ----------
+TeamSide? _checkSetWin(MatchState s) {
+  final target = s.setNumber == 5 ? 15 : 25;
+  if (s.score.home >= target && s.score.home - s.score.away >= 2) {
+    return TeamSide.home;
+  }
+  if (s.score.away >= target && s.score.away - s.score.home >= 2) {
+    return TeamSide.away;
+  }
+  return null;
+}
+
 TeamSide _other(TeamSide s) =>
     s == TeamSide.home ? TeamSide.away : TeamSide.home;
 

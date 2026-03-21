@@ -1,0 +1,76 @@
+{
+  "oh": {
+    "positionName": "Outside Hitter",
+    "description": "Primary attacker and passer, left-side position requiring all-around skills",
+    "skillWeights": {
+      "attackLeftSideTempo": 0.20,
+      "attackLeftSideHigh": 0.15,
+      "receptionJumpServe": 0.15,
+      "receptionJumpFloat": 0.12,
+      "defendLeftSideTempo": 0.08,
+      "defendLeftSideHigh": 0.06,
+      "blockLeftSideTempo": 0.08,
+      "blockLeftSideHigh": 0.06,
+      "serveJumpServe": 0.05,
+      "serveJumpFloat": 0.05
+    }
+  },
+  "opp": {
+    "positionName": "Opposite Hitter",
+    "description": "Right-side attacker and blocker, focused on power and blocking",
+    "skillWeights": {
+      "attackLeftSideTempo": 0.18,
+      "attackLeftSideHigh": 0.17,
+      "attackBackRow": 0.10,
+      "blockMiddle": 0.15,
+      "blockRightSide": 0.12,
+      "blockLeftSideTempo": 0.08,
+      "serveJumpServe": 0.10,
+      "serveJumpFloat": 0.05,
+      "defendMiddle": 0.03,
+      "defendBackRow": 0.02
+    }
+  },
+  "mb": {
+    "positionName": "Middle Blocker",
+    "description": "Quick attacker and primary blocker, requires speed and timing",
+    "skillWeights": {
+      "blockMiddle": 0.25,
+      "blockLeftSideTempo": 0.15,
+      "blockLeftSideHigh": 0.10,
+      "blockRightSide": 0.10,
+      "attackMiddle": 0.25,
+      "setMiddle": 0.05,
+      "defendMiddle": 0.05,
+      "serveJumpServe": 0.03,
+      "serveJumpFloat": 0.02
+    }
+  },
+  "s": {
+    "positionName": "Setter",
+    "description": "Playmaker who distributes the ball to attackers",
+    "skillWeights": {
+      "setLeftSideTempo": 0.22,
+      "setLeftSideHigh": 0.20,
+      "setMiddle": 0.22,
+      "setBackRow": 0.18,
+      "defendLeftSideTempo": 0.05,
+      "defendLeftSideHigh": 0.05,
+      "blockMiddle": 0.03,
+      "serveJumpFloat": 0.03,
+      "serveJumpServe": 0.02
+    }
+  },
+  "l": {
+    "positionName": "Libero",
+    "description": "Defensive specialist focusing on reception and defense",
+    "skillWeights": {
+      "receptionJumpServe": 0.28,
+      "receptionJumpFloat": 0.27,
+      "defendLeftSideTempo": 0.15,
+      "defendLeftSideHigh": 0.12,
+      "defendMiddle": 0.10,
+      "defendBackRow": 0.08
+    }
+  }
+}

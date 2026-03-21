@@ -190,6 +190,10 @@ mixin _$MatchState {
       throw _privateConstructorUsedError; // current server’s team
   Score get score => throw _privateConstructorUsedError;
   MatchPhase get phase => throw _privateConstructorUsedError;
+  int get setsHome => throw _privateConstructorUsedError;
+  int get setsAway => throw _privateConstructorUsedError;
+  int get setNumber => throw _privateConstructorUsedError; // 1–5
+  bool get isMatchOver => throw _privateConstructorUsedError;
 
   /// Serializes this MatchState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -214,6 +218,10 @@ abstract class $MatchStateCopyWith<$Res> {
     TeamSide serverSide,
     Score score,
     MatchPhase phase,
+    int setsHome,
+    int setsAway,
+    int setNumber,
+    bool isMatchOver,
   });
 
   $ScoreCopyWith<$Res> get score;
@@ -239,6 +247,10 @@ class _$MatchStateCopyWithImpl<$Res, $Val extends MatchState>
     Object? serverSide = null,
     Object? score = null,
     Object? phase = null,
+    Object? setsHome = null,
+    Object? setsAway = null,
+    Object? setNumber = null,
+    Object? isMatchOver = null,
   }) {
     return _then(
       _value.copyWith(
@@ -262,6 +274,22 @@ class _$MatchStateCopyWithImpl<$Res, $Val extends MatchState>
                 ? _value.phase
                 : phase // ignore: cast_nullable_to_non_nullable
                       as MatchPhase,
+            setsHome: null == setsHome
+                ? _value.setsHome
+                : setsHome // ignore: cast_nullable_to_non_nullable
+                      as int,
+            setsAway: null == setsAway
+                ? _value.setsAway
+                : setsAway // ignore: cast_nullable_to_non_nullable
+                      as int,
+            setNumber: null == setNumber
+                ? _value.setNumber
+                : setNumber // ignore: cast_nullable_to_non_nullable
+                      as int,
+            isMatchOver: null == isMatchOver
+                ? _value.isMatchOver
+                : isMatchOver // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -293,6 +321,10 @@ abstract class _$$MatchStateImplCopyWith<$Res>
     TeamSide serverSide,
     Score score,
     MatchPhase phase,
+    int setsHome,
+    int setsAway,
+    int setNumber,
+    bool isMatchOver,
   });
 
   @override
@@ -318,6 +350,10 @@ class __$$MatchStateImplCopyWithImpl<$Res>
     Object? serverSide = null,
     Object? score = null,
     Object? phase = null,
+    Object? setsHome = null,
+    Object? setsAway = null,
+    Object? setNumber = null,
+    Object? isMatchOver = null,
   }) {
     return _then(
       _$MatchStateImpl(
@@ -341,6 +377,22 @@ class __$$MatchStateImplCopyWithImpl<$Res>
             ? _value.phase
             : phase // ignore: cast_nullable_to_non_nullable
                   as MatchPhase,
+        setsHome: null == setsHome
+            ? _value.setsHome
+            : setsHome // ignore: cast_nullable_to_non_nullable
+                  as int,
+        setsAway: null == setsAway
+            ? _value.setsAway
+            : setsAway // ignore: cast_nullable_to_non_nullable
+                  as int,
+        setNumber: null == setNumber
+            ? _value.setNumber
+            : setNumber // ignore: cast_nullable_to_non_nullable
+                  as int,
+        isMatchOver: null == isMatchOver
+            ? _value.isMatchOver
+            : isMatchOver // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -355,6 +407,10 @@ class _$MatchStateImpl implements _MatchState {
     required this.serverSide,
     required this.score,
     required this.phase,
+    this.setsHome = 0,
+    this.setsAway = 0,
+    this.setNumber = 1,
+    this.isMatchOver = false,
   });
 
   factory _$MatchStateImpl.fromJson(Map<String, dynamic> json) =>
@@ -372,10 +428,23 @@ class _$MatchStateImpl implements _MatchState {
   final Score score;
   @override
   final MatchPhase phase;
+  @override
+  @JsonKey()
+  final int setsHome;
+  @override
+  @JsonKey()
+  final int setsAway;
+  @override
+  @JsonKey()
+  final int setNumber;
+  // 1–5
+  @override
+  @JsonKey()
+  final bool isMatchOver;
 
   @override
   String toString() {
-    return 'MatchState(rallyId: $rallyId, rotationTick: $rotationTick, serverSide: $serverSide, score: $score, phase: $phase)';
+    return 'MatchState(rallyId: $rallyId, rotationTick: $rotationTick, serverSide: $serverSide, score: $score, phase: $phase, setsHome: $setsHome, setsAway: $setsAway, setNumber: $setNumber, isMatchOver: $isMatchOver)';
   }
 
   @override
@@ -389,13 +458,31 @@ class _$MatchStateImpl implements _MatchState {
             (identical(other.serverSide, serverSide) ||
                 other.serverSide == serverSide) &&
             (identical(other.score, score) || other.score == score) &&
-            (identical(other.phase, phase) || other.phase == phase));
+            (identical(other.phase, phase) || other.phase == phase) &&
+            (identical(other.setsHome, setsHome) ||
+                other.setsHome == setsHome) &&
+            (identical(other.setsAway, setsAway) ||
+                other.setsAway == setsAway) &&
+            (identical(other.setNumber, setNumber) ||
+                other.setNumber == setNumber) &&
+            (identical(other.isMatchOver, isMatchOver) ||
+                other.isMatchOver == isMatchOver));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, rallyId, rotationTick, serverSide, score, phase);
+  int get hashCode => Object.hash(
+    runtimeType,
+    rallyId,
+    rotationTick,
+    serverSide,
+    score,
+    phase,
+    setsHome,
+    setsAway,
+    setNumber,
+    isMatchOver,
+  );
 
   /// Create a copy of MatchState
   /// with the given fields replaced by the non-null parameter values.
@@ -418,6 +505,10 @@ abstract class _MatchState implements MatchState {
     required final TeamSide serverSide,
     required final Score score,
     required final MatchPhase phase,
+    final int setsHome,
+    final int setsAway,
+    final int setNumber,
+    final bool isMatchOver,
   }) = _$MatchStateImpl;
 
   factory _MatchState.fromJson(Map<String, dynamic> json) =
@@ -433,6 +524,14 @@ abstract class _MatchState implements MatchState {
   Score get score;
   @override
   MatchPhase get phase;
+  @override
+  int get setsHome;
+  @override
+  int get setsAway;
+  @override
+  int get setNumber; // 1–5
+  @override
+  bool get isMatchOver;
 
   /// Create a copy of MatchState
   /// with the given fields replaced by the non-null parameter values.

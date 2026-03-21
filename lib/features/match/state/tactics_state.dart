@@ -42,10 +42,24 @@ class ServeReceiveTacticSpec {
 @immutable
 class TacticsState {
   final Map<(TeamSide, int), ServeReceiveTacticSpec> byRot;
-  const TacticsState(this.byRot);
+
+  /// Role tag of the player who takes over setting when the regular setter
+  /// plays the first ball (digs) and the attack was defended with 2 or 3
+  /// blockers. Team-wide (not per-rotation). Default: 'OH1'.
+  final Map<TeamSide, String> backupSetterByTeam;
+
+  const TacticsState(
+    this.byRot, {
+    this.backupSetterByTeam = const {},
+  });
+
   TacticsState copyWith({
     Map<(TeamSide, int), ServeReceiveTacticSpec>? byRot,
-  }) => TacticsState(byRot ?? this.byRot);
+    Map<TeamSide, String>? backupSetterByTeam,
+  }) => TacticsState(
+        byRot ?? this.byRot,
+        backupSetterByTeam: backupSetterByTeam ?? this.backupSetterByTeam,
+      );
 }
 
 /// Allowed combos per #passers.
@@ -108,7 +122,25 @@ class TacticsNotifier extends StateNotifier<TacticsState> {
         );
       }
     }
-    state = TacticsState(defaults);
+    state = TacticsState(
+      defaults,
+      backupSetterByTeam: {
+        TeamSide.home: 'OH1',
+        TeamSide.away: 'OH1',
+      },
+    );
+  }
+
+  /// Returns the role tag configured as backup setter for [side].
+  String getBackupSetter(TeamSide side) =>
+      state.backupSetterByTeam[side] ?? 'OH1';
+
+  /// Configures which role takes over setting when the setter plays the first
+  /// ball with 2+ blockers on the previous attack.
+  void setBackupSetter(TeamSide side, String roleTag) {
+    state = state.copyWith(
+      backupSetterByTeam: {...state.backupSetterByTeam, side: roleTag},
+    );
   }
 
   /// Read current spec (always returns something—initializes if absent).

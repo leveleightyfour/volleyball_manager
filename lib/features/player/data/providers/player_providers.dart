@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:volleyball_manager/core/db/database.dart';
+import '../dto/player_dto.dart';
 import '../local/player_dao.dart';
 import '../repositories/player_repository.dart';
 
@@ -17,9 +18,9 @@ PlayerRepository playerRepository(Ref ref) =>
     PlayerRepository(ref.watch(playerDaoProvider));
 
 @riverpod
-Stream<List<Player>> playersStream(Ref ref) =>
+Stream<List<PlayerDto>> playersStream(Ref ref) =>
     ref.watch(playerRepositoryProvider).watchAll();
 
 @riverpod
-Future<List<Player>> playersOnce(Ref ref) =>
+Future<List<PlayerDto>> playersOnce(Ref ref) =>
     ref.watch(playerRepositoryProvider).getAll();

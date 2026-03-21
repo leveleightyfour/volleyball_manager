@@ -57,28 +57,29 @@ final playerRepositoryProvider = Provider<PlayerRepository>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef PlayerRepositoryRef = ProviderRef<PlayerRepository>;
-String _$playersStreamHash() => r'4154147f7b19060ea56cba992ba7ee9e9b8824ad';
+String _$playersStreamHash() => r'a2d4c21c52a66bee68200bf69e7b6b7fae09ef38';
 
 /// See also [playersStream].
 @ProviderFor(playersStream)
-final playersStreamProvider = AutoDisposeStreamProvider<List<Player>>.internal(
-  playersStream,
-  name: r'playersStreamProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$playersStreamHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final playersStreamProvider =
+    AutoDisposeStreamProvider<List<PlayerDto>>.internal(
+      playersStream,
+      name: r'playersStreamProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$playersStreamHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef PlayersStreamRef = AutoDisposeStreamProviderRef<List<Player>>;
-String _$playersOnceHash() => r'f5646dc51d22b5fcb242d65d50214caad23a7c7f';
+typedef PlayersStreamRef = AutoDisposeStreamProviderRef<List<PlayerDto>>;
+String _$playersOnceHash() => r'75fe1e0ee3f95a837641f81bd399302c3e0c98a6';
 
 /// See also [playersOnce].
 @ProviderFor(playersOnce)
-final playersOnceProvider = AutoDisposeFutureProvider<List<Player>>.internal(
+final playersOnceProvider = AutoDisposeFutureProvider<List<PlayerDto>>.internal(
   playersOnce,
   name: r'playersOnceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -90,6 +91,6 @@ final playersOnceProvider = AutoDisposeFutureProvider<List<Player>>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef PlayersOnceRef = AutoDisposeFutureProviderRef<List<Player>>;
+typedef PlayersOnceRef = AutoDisposeFutureProviderRef<List<PlayerDto>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -21,6 +21,10 @@ _$MatchStateImpl _$$MatchStateImplFromJson(Map<String, dynamic> json) =>
       serverSide: $enumDecode(_$TeamSideEnumMap, json['serverSide']),
       score: Score.fromJson(json['score'] as Map<String, dynamic>),
       phase: $enumDecode(_$MatchPhaseEnumMap, json['phase']),
+      setsHome: (json['setsHome'] as num?)?.toInt() ?? 0,
+      setsAway: (json['setsAway'] as num?)?.toInt() ?? 0,
+      setNumber: (json['setNumber'] as num?)?.toInt() ?? 1,
+      isMatchOver: json['isMatchOver'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$MatchStateImplToJson(_$MatchStateImpl instance) =>
@@ -30,6 +34,10 @@ Map<String, dynamic> _$$MatchStateImplToJson(_$MatchStateImpl instance) =>
       'serverSide': _$TeamSideEnumMap[instance.serverSide]!,
       'score': instance.score,
       'phase': _$MatchPhaseEnumMap[instance.phase]!,
+      'setsHome': instance.setsHome,
+      'setsAway': instance.setsAway,
+      'setNumber': instance.setNumber,
+      'isMatchOver': instance.isMatchOver,
     };
 
 const _$TeamSideEnumMap = {TeamSide.home: 'home', TeamSide.away: 'away'};
@@ -40,5 +48,6 @@ const _$MatchPhaseEnumMap = {
   MatchPhase.reception: 'reception',
   MatchPhase.setting: 'setting',
   MatchPhase.attack: 'attack',
+  MatchPhase.dig: 'dig',
   MatchPhase.rallyEnd: 'rallyEnd',
 };

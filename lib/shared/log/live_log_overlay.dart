@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:volleyball_manager/shared/log/live_log.dart';
+import 'package:volleyball_manager/shared/log/match_debug_state.dart';
 
 class LiveLogOverlay extends ConsumerStatefulWidget {
   const LiveLogOverlay({super.key});
@@ -33,6 +34,8 @@ class _LiveLogOverlayState extends ConsumerState<LiveLogOverlay> {
       }
     });
 
+    final rot = ref.watch(matchDebugStateProvider);
+
     return Align(
       alignment: Alignment.bottomLeft,
       child: Padding(
@@ -40,7 +43,7 @@ class _LiveLogOverlayState extends ConsumerState<LiveLogOverlay> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(
             maxWidth: 520,
-            maxHeight: 150,
+            maxHeight: 170,
             minWidth: 260,
             minHeight: 120,
           ),
@@ -50,34 +53,51 @@ class _LiveLogOverlayState extends ConsumerState<LiveLogOverlay> {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Colors.white24),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Scrollbar(
-                controller: _scrollCtrl, // <-- same controller
-                thumbVisibility: true,
-                interactive: true,
-                child: ListView.builder(
-                  // <-- the attached scrollable
-                  controller: _scrollCtrl,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 10,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 2),
+                  child: Text(
+                    'HOME R${rot.homeRotation}   AWAY R${rot.awayRotation}',
+                    style: const TextStyle(
+                      color: Colors.cyanAccent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                    ),
                   ),
-                  itemCount: lines.length,
-                  itemBuilder: (context, i) {
-                    final line = lines[i];
-                    return Text(
-                      line.text,
-                      style: TextStyle(
-                        color: line.color,
-                        fontSize: 12.0,
-                        height: 1.2,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    );
-                  },
                 ),
-              ),
+                const Divider(height: 1, color: Colors.white24),
+                Flexible(
+                  child: Scrollbar(
+                    controller: _scrollCtrl,
+                    thumbVisibility: true,
+                    interactive: true,
+                    child: ListView.builder(
+                      controller: _scrollCtrl,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 10,
+                      ),
+                      itemCount: lines.length,
+                      itemBuilder: (context, i) {
+                        final line = lines[i];
+                        return Text(
+                          line.text,
+                          style: TextStyle(
+                            color: line.color,
+                            fontSize: 12.0,
+                            height: 1.2,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

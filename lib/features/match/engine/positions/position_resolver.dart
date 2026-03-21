@@ -32,9 +32,9 @@ class PositionResolver {
 
     final half = _halfOf(courtRect, side);
     Offset mapPoint(RolePoint p) {
-      // allow small negative x for server-start, etc.
+      // allow small negative x for server-start and y > 1.0 for off-court (bench)
       final nx = p.x.clamp(-0.20, 1.20);
-      final ny = p.y.clamp(0.0, 1.0);
+      final ny = p.y.clamp(-0.20, 1.20);
 
       // Horizontal mirror for AWAY so JSON can be authored in HOME orientation
       final x = side == TeamSide.home
@@ -77,7 +77,7 @@ class PositionResolver {
 
     final half = _halfOf(courtRect, side);
     final nx = ap.x.clamp(-0.20, 1.20);
-    final ny = ap.y.clamp(0.0, 1.0);
+    final ny = ap.y.clamp(-0.20, 1.20);
     final x = side == TeamSide.home
         ? half.left + half.width * nx
         : half.right - half.width * nx;

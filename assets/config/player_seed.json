@@ -1,0 +1,134 @@
+{
+  "teams": [
+    { "id": 1, "name": "Spike FC" },
+    { "id": 2, "name": "Block Stars" }
+  ],
+  "players": [
+    {
+      "id": 1, "name": "Carlos Ruiz", "teamId": 1, "roleTag": "S", "rotationOrder": 1,
+      "wristSnap": 12, "power": 12, "accuracy": 14, "aggression": 11,
+      "strength": 14, "positioning": 16, "predictability": 17, "creativity": 15,
+      "penetration": 10, "height": 12, "form": 11, "anticipation": 14,
+      "footwork": 12, "platform": 12, "stability": 12, "touch": 13,
+      "vision": 15, "timing": 16, "versatility": 13,
+      "reaction": 14, "reading": 15, "intention": 13, "control": 14
+    },
+    {
+      "id": 2, "name": "Jordan Blake", "teamId": 1, "roleTag": "OH1", "rotationOrder": 3,
+      "wristSnap": 14, "power": 16, "accuracy": 13, "aggression": 14,
+      "strength": 11, "positioning": 11, "predictability": 11, "creativity": 10,
+      "penetration": 13, "height": 15, "form": 13, "anticipation": 14,
+      "footwork": 14, "platform": 15, "stability": 14, "touch": 13,
+      "vision": 16, "timing": 15, "versatility": 15,
+      "reaction": 15, "reading": 14, "intention": 13, "control": 13
+    },
+    {
+      "id": 3, "name": "Mateo Silva", "teamId": 1, "roleTag": "OH2", "rotationOrder": 5,
+      "wristSnap": 15, "power": 17, "accuracy": 12, "aggression": 15,
+      "strength": 12, "positioning": 10, "predictability": 10, "creativity": 10,
+      "penetration": 12, "height": 14, "form": 12, "anticipation": 13,
+      "footwork": 12, "platform": 13, "stability": 12, "touch": 11,
+      "vision": 14, "timing": 13, "versatility": 14,
+      "reaction": 13, "reading": 12, "intention": 12, "control": 11
+    },
+    {
+      "id": 4, "name": "Kai Chen", "teamId": 1, "roleTag": "MB1", "rotationOrder": 2,
+      "wristSnap": 11, "power": 15, "accuracy": 10, "aggression": 12,
+      "strength": 13, "positioning": 12, "predictability": 11, "creativity": 10,
+      "penetration": 17, "height": 18, "form": 16, "anticipation": 15,
+      "footwork": 10, "platform": 10, "stability": 10, "touch": 9,
+      "vision": 12, "timing": 17, "versatility": 11,
+      "reaction": 15, "reading": 14, "intention": 13, "control": 11
+    },
+    {
+      "id": 5, "name": "Anton Voss", "teamId": 1, "roleTag": "MB2", "rotationOrder": 6,
+      "wristSnap": 10, "power": 14, "accuracy": 10, "aggression": 11,
+      "strength": 12, "positioning": 11, "predictability": 11, "creativity": 10,
+      "penetration": 15, "height": 17, "form": 15, "anticipation": 14,
+      "footwork": 10, "platform": 10, "stability": 10, "touch": 8,
+      "vision": 11, "timing": 16, "versatility": 10,
+      "reaction": 14, "reading": 13, "intention": 12, "control": 10
+    },
+    {
+      "id": 6, "name": "Dante Cruz", "teamId": 1, "roleTag": "OPP", "rotationOrder": 4,
+      "wristSnap": 15, "power": 18, "accuracy": 12, "aggression": 16,
+      "strength": 11, "positioning": 11, "predictability": 10, "creativity": 10,
+      "penetration": 13, "height": 16, "form": 13, "anticipation": 13,
+      "footwork": 10, "platform": 10, "stability": 10, "touch": 10,
+      "vision": 16, "timing": 14, "versatility": 15,
+      "reaction": 14, "reading": 13, "intention": 13, "control": 12
+    },
+    {
+      "id": 7, "name": "Riko Tanaka", "teamId": 1, "roleTag": "L", "rotationOrder": 7,
+      "wristSnap": 10, "power": 9, "accuracy": 12, "aggression": 10,
+      "strength": 10, "positioning": 12, "predictability": 13, "creativity": 11,
+      "penetration": 8, "height": 9, "form": 9, "anticipation": 14,
+      "footwork": 17, "platform": 18, "stability": 18, "touch": 16,
+      "vision": 13, "timing": 12, "versatility": 12,
+      "reaction": 17, "reading": 16, "intention": 15, "control": 16
+    },
+    {
+      "id": 8, "name": "Elena Novak", "teamId": 2, "roleTag": "S", "rotationOrder": 1,
+      "wristSnap": 11, "power": 11, "accuracy": 13, "aggression": 10,
+      "strength": 15, "positioning": 15, "predictability": 16, "creativity": 14,
+      "penetration": 10, "height": 11, "form": 11, "anticipation": 13,
+      "footwork": 12, "platform": 12, "stability": 13, "touch": 14,
+      "vision": 14, "timing": 15, "versatility": 13,
+      "reaction": 13, "reading": 14, "intention": 13, "control": 15
+    },
+    {
+      "id": 9, "name": "Liam Torres", "teamId": 2, "roleTag": "OH1", "rotationOrder": 3,
+      "wristSnap": 14, "power": 15, "accuracy": 14, "aggression": 13,
+      "strength": 11, "positioning": 11, "predictability": 11, "creativity": 10,
+      "penetration": 13, "height": 14, "form": 12, "anticipation": 13,
+      "footwork": 15, "platform": 16, "stability": 15, "touch": 14,
+      "vision": 15, "timing": 14, "versatility": 15,
+      "reaction": 15, "reading": 14, "intention": 13, "control": 13
+    },
+    {
+      "id": 10, "name": "Yuki Yamamoto", "teamId": 2, "roleTag": "OH2", "rotationOrder": 5,
+      "wristSnap": 13, "power": 16, "accuracy": 12, "aggression": 14,
+      "strength": 11, "positioning": 10, "predictability": 10, "creativity": 10,
+      "penetration": 12, "height": 15, "form": 12, "anticipation": 13,
+      "footwork": 13, "platform": 14, "stability": 13, "touch": 12,
+      "vision": 15, "timing": 14, "versatility": 15,
+      "reaction": 14, "reading": 13, "intention": 12, "control": 12
+    },
+    {
+      "id": 11, "name": "Marco Rossi", "teamId": 2, "roleTag": "MB1", "rotationOrder": 2,
+      "wristSnap": 10, "power": 16, "accuracy": 10, "aggression": 12,
+      "strength": 14, "positioning": 12, "predictability": 11, "creativity": 10,
+      "penetration": 18, "height": 19, "form": 17, "anticipation": 16,
+      "footwork": 9, "platform": 10, "stability": 10, "touch": 8,
+      "vision": 11, "timing": 17, "versatility": 10,
+      "reaction": 16, "reading": 14, "intention": 13, "control": 10
+    },
+    {
+      "id": 12, "name": "Henrik Berg", "teamId": 2, "roleTag": "MB2", "rotationOrder": 6,
+      "wristSnap": 10, "power": 13, "accuracy": 10, "aggression": 11,
+      "strength": 11, "positioning": 11, "predictability": 11, "creativity": 10,
+      "penetration": 14, "height": 16, "form": 14, "anticipation": 14,
+      "footwork": 10, "platform": 9, "stability": 10, "touch": 9,
+      "vision": 11, "timing": 15, "versatility": 11,
+      "reaction": 14, "reading": 12, "intention": 12, "control": 11
+    },
+    {
+      "id": 13, "name": "Xavier Dumont", "teamId": 2, "roleTag": "OPP", "rotationOrder": 4,
+      "wristSnap": 14, "power": 17, "accuracy": 11, "aggression": 16,
+      "strength": 11, "positioning": 10, "predictability": 10, "creativity": 10,
+      "penetration": 13, "height": 15, "form": 12, "anticipation": 12,
+      "footwork": 10, "platform": 10, "stability": 10, "touch": 9,
+      "vision": 17, "timing": 15, "versatility": 16,
+      "reaction": 13, "reading": 13, "intention": 13, "control": 11
+    },
+    {
+      "id": 14, "name": "Priya Patel", "teamId": 2, "roleTag": "L", "rotationOrder": 7,
+      "wristSnap": 10, "power": 8, "accuracy": 13, "aggression": 10,
+      "strength": 10, "positioning": 12, "predictability": 12, "creativity": 11,
+      "penetration": 8, "height": 8, "form": 9, "anticipation": 15,
+      "footwork": 18, "platform": 17, "stability": 17, "touch": 17,
+      "vision": 13, "timing": 12, "versatility": 12,
+      "reaction": 18, "reading": 17, "intention": 16, "control": 17
+    }
+  ]
+}

@@ -29,6 +29,10 @@ EngineEvent _$EngineEventFromJson(Map<String, dynamic> json) {
       return PhaseChanged.fromJson(json);
     case 'rallyEnded':
       return RallyEnded.fromJson(json);
+    case 'setEnded':
+      return SetEnded.fromJson(json);
+    case 'matchEnded':
+      return MatchEnded.fromJson(json);
 
     default:
       throw CheckedFromJsonException(
@@ -58,6 +62,23 @@ mixin _$EngineEvent {
     rotationAdvanced,
     required TResult Function(MatchPhase phase, int rallyId) phaseChanged,
     required TResult Function(TeamSide pointTo, int rallyId) rallyEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    setEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    matchEnded,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
@@ -68,6 +89,23 @@ mixin _$EngineEvent {
     TResult? Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult? Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult? Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
@@ -78,6 +116,23 @@ mixin _$EngineEvent {
     TResult Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -88,6 +143,8 @@ mixin _$EngineEvent {
     required TResult Function(RotationAdvanced value) rotationAdvanced,
     required TResult Function(PhaseChanged value) phaseChanged,
     required TResult Function(RallyEnded value) rallyEnded,
+    required TResult Function(SetEnded value) setEnded,
+    required TResult Function(MatchEnded value) matchEnded,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
@@ -97,6 +154,8 @@ mixin _$EngineEvent {
     TResult? Function(RotationAdvanced value)? rotationAdvanced,
     TResult? Function(PhaseChanged value)? phaseChanged,
     TResult? Function(RallyEnded value)? rallyEnded,
+    TResult? Function(SetEnded value)? setEnded,
+    TResult? Function(MatchEnded value)? matchEnded,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
@@ -106,6 +165,8 @@ mixin _$EngineEvent {
     TResult Function(RotationAdvanced value)? rotationAdvanced,
     TResult Function(PhaseChanged value)? phaseChanged,
     TResult Function(RallyEnded value)? rallyEnded,
+    TResult Function(SetEnded value)? setEnded,
+    TResult Function(MatchEnded value)? matchEnded,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
 
@@ -242,6 +303,23 @@ class _$ServeBallFlightImpl implements ServeBallFlight {
     rotationAdvanced,
     required TResult Function(MatchPhase phase, int rallyId) phaseChanged,
     required TResult Function(TeamSide pointTo, int rallyId) rallyEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    setEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    matchEnded,
   }) {
     return serveBallFlight(fromSide, durationSec);
   }
@@ -256,6 +334,23 @@ class _$ServeBallFlightImpl implements ServeBallFlight {
     TResult? Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult? Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult? Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
   }) {
     return serveBallFlight?.call(fromSide, durationSec);
   }
@@ -270,6 +365,23 @@ class _$ServeBallFlightImpl implements ServeBallFlight {
     TResult Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
     required TResult orElse(),
   }) {
     if (serveBallFlight != null) {
@@ -287,6 +399,8 @@ class _$ServeBallFlightImpl implements ServeBallFlight {
     required TResult Function(RotationAdvanced value) rotationAdvanced,
     required TResult Function(PhaseChanged value) phaseChanged,
     required TResult Function(RallyEnded value) rallyEnded,
+    required TResult Function(SetEnded value) setEnded,
+    required TResult Function(MatchEnded value) matchEnded,
   }) {
     return serveBallFlight(this);
   }
@@ -300,6 +414,8 @@ class _$ServeBallFlightImpl implements ServeBallFlight {
     TResult? Function(RotationAdvanced value)? rotationAdvanced,
     TResult? Function(PhaseChanged value)? phaseChanged,
     TResult? Function(RallyEnded value)? rallyEnded,
+    TResult? Function(SetEnded value)? setEnded,
+    TResult? Function(MatchEnded value)? matchEnded,
   }) {
     return serveBallFlight?.call(this);
   }
@@ -313,6 +429,8 @@ class _$ServeBallFlightImpl implements ServeBallFlight {
     TResult Function(RotationAdvanced value)? rotationAdvanced,
     TResult Function(PhaseChanged value)? phaseChanged,
     TResult Function(RallyEnded value)? rallyEnded,
+    TResult Function(SetEnded value)? setEnded,
+    TResult Function(MatchEnded value)? matchEnded,
     required TResult orElse(),
   }) {
     if (serveBallFlight != null) {
@@ -472,6 +590,23 @@ class _$PlayerMoveImpl implements PlayerMove {
     rotationAdvanced,
     required TResult Function(MatchPhase phase, int rallyId) phaseChanged,
     required TResult Function(TeamSide pointTo, int rallyId) rallyEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    setEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    matchEnded,
   }) {
     return playerMove(playerId, toX, toY, durationSec);
   }
@@ -486,6 +621,23 @@ class _$PlayerMoveImpl implements PlayerMove {
     TResult? Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult? Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult? Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
   }) {
     return playerMove?.call(playerId, toX, toY, durationSec);
   }
@@ -500,6 +652,23 @@ class _$PlayerMoveImpl implements PlayerMove {
     TResult Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
     required TResult orElse(),
   }) {
     if (playerMove != null) {
@@ -517,6 +686,8 @@ class _$PlayerMoveImpl implements PlayerMove {
     required TResult Function(RotationAdvanced value) rotationAdvanced,
     required TResult Function(PhaseChanged value) phaseChanged,
     required TResult Function(RallyEnded value) rallyEnded,
+    required TResult Function(SetEnded value) setEnded,
+    required TResult Function(MatchEnded value) matchEnded,
   }) {
     return playerMove(this);
   }
@@ -530,6 +701,8 @@ class _$PlayerMoveImpl implements PlayerMove {
     TResult? Function(RotationAdvanced value)? rotationAdvanced,
     TResult? Function(PhaseChanged value)? phaseChanged,
     TResult? Function(RallyEnded value)? rallyEnded,
+    TResult? Function(SetEnded value)? setEnded,
+    TResult? Function(MatchEnded value)? matchEnded,
   }) {
     return playerMove?.call(this);
   }
@@ -543,6 +716,8 @@ class _$PlayerMoveImpl implements PlayerMove {
     TResult Function(RotationAdvanced value)? rotationAdvanced,
     TResult Function(PhaseChanged value)? phaseChanged,
     TResult Function(RallyEnded value)? rallyEnded,
+    TResult Function(SetEnded value)? setEnded,
+    TResult Function(MatchEnded value)? matchEnded,
     required TResult orElse(),
   }) {
     if (playerMove != null) {
@@ -682,6 +857,23 @@ class _$ScoreChangedImpl implements ScoreChanged {
     rotationAdvanced,
     required TResult Function(MatchPhase phase, int rallyId) phaseChanged,
     required TResult Function(TeamSide pointTo, int rallyId) rallyEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    setEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    matchEnded,
   }) {
     return scoreChanged(home, away);
   }
@@ -696,6 +888,23 @@ class _$ScoreChangedImpl implements ScoreChanged {
     TResult? Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult? Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult? Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
   }) {
     return scoreChanged?.call(home, away);
   }
@@ -710,6 +919,23 @@ class _$ScoreChangedImpl implements ScoreChanged {
     TResult Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
     required TResult orElse(),
   }) {
     if (scoreChanged != null) {
@@ -727,6 +953,8 @@ class _$ScoreChangedImpl implements ScoreChanged {
     required TResult Function(RotationAdvanced value) rotationAdvanced,
     required TResult Function(PhaseChanged value) phaseChanged,
     required TResult Function(RallyEnded value) rallyEnded,
+    required TResult Function(SetEnded value) setEnded,
+    required TResult Function(MatchEnded value) matchEnded,
   }) {
     return scoreChanged(this);
   }
@@ -740,6 +968,8 @@ class _$ScoreChangedImpl implements ScoreChanged {
     TResult? Function(RotationAdvanced value)? rotationAdvanced,
     TResult? Function(PhaseChanged value)? phaseChanged,
     TResult? Function(RallyEnded value)? rallyEnded,
+    TResult? Function(SetEnded value)? setEnded,
+    TResult? Function(MatchEnded value)? matchEnded,
   }) {
     return scoreChanged?.call(this);
   }
@@ -753,6 +983,8 @@ class _$ScoreChangedImpl implements ScoreChanged {
     TResult Function(RotationAdvanced value)? rotationAdvanced,
     TResult Function(PhaseChanged value)? phaseChanged,
     TResult Function(RallyEnded value)? rallyEnded,
+    TResult Function(SetEnded value)? setEnded,
+    TResult Function(MatchEnded value)? matchEnded,
     required TResult orElse(),
   }) {
     if (scoreChanged != null) {
@@ -893,6 +1125,23 @@ class _$RotationAdvancedImpl implements RotationAdvanced {
     rotationAdvanced,
     required TResult Function(MatchPhase phase, int rallyId) phaseChanged,
     required TResult Function(TeamSide pointTo, int rallyId) rallyEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    setEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    matchEnded,
   }) {
     return rotationAdvanced(rotationTick, serverSide);
   }
@@ -907,6 +1156,23 @@ class _$RotationAdvancedImpl implements RotationAdvanced {
     TResult? Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult? Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult? Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
   }) {
     return rotationAdvanced?.call(rotationTick, serverSide);
   }
@@ -921,6 +1187,23 @@ class _$RotationAdvancedImpl implements RotationAdvanced {
     TResult Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
     required TResult orElse(),
   }) {
     if (rotationAdvanced != null) {
@@ -938,6 +1221,8 @@ class _$RotationAdvancedImpl implements RotationAdvanced {
     required TResult Function(RotationAdvanced value) rotationAdvanced,
     required TResult Function(PhaseChanged value) phaseChanged,
     required TResult Function(RallyEnded value) rallyEnded,
+    required TResult Function(SetEnded value) setEnded,
+    required TResult Function(MatchEnded value) matchEnded,
   }) {
     return rotationAdvanced(this);
   }
@@ -951,6 +1236,8 @@ class _$RotationAdvancedImpl implements RotationAdvanced {
     TResult? Function(RotationAdvanced value)? rotationAdvanced,
     TResult? Function(PhaseChanged value)? phaseChanged,
     TResult? Function(RallyEnded value)? rallyEnded,
+    TResult? Function(SetEnded value)? setEnded,
+    TResult? Function(MatchEnded value)? matchEnded,
   }) {
     return rotationAdvanced?.call(this);
   }
@@ -964,6 +1251,8 @@ class _$RotationAdvancedImpl implements RotationAdvanced {
     TResult Function(RotationAdvanced value)? rotationAdvanced,
     TResult Function(PhaseChanged value)? phaseChanged,
     TResult Function(RallyEnded value)? rallyEnded,
+    TResult Function(SetEnded value)? setEnded,
+    TResult Function(MatchEnded value)? matchEnded,
     required TResult orElse(),
   }) {
     if (rotationAdvanced != null) {
@@ -1099,6 +1388,23 @@ class _$PhaseChangedImpl implements PhaseChanged {
     rotationAdvanced,
     required TResult Function(MatchPhase phase, int rallyId) phaseChanged,
     required TResult Function(TeamSide pointTo, int rallyId) rallyEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    setEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    matchEnded,
   }) {
     return phaseChanged(phase, rallyId);
   }
@@ -1113,6 +1419,23 @@ class _$PhaseChangedImpl implements PhaseChanged {
     TResult? Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult? Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult? Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
   }) {
     return phaseChanged?.call(phase, rallyId);
   }
@@ -1127,6 +1450,23 @@ class _$PhaseChangedImpl implements PhaseChanged {
     TResult Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
     required TResult orElse(),
   }) {
     if (phaseChanged != null) {
@@ -1144,6 +1484,8 @@ class _$PhaseChangedImpl implements PhaseChanged {
     required TResult Function(RotationAdvanced value) rotationAdvanced,
     required TResult Function(PhaseChanged value) phaseChanged,
     required TResult Function(RallyEnded value) rallyEnded,
+    required TResult Function(SetEnded value) setEnded,
+    required TResult Function(MatchEnded value) matchEnded,
   }) {
     return phaseChanged(this);
   }
@@ -1157,6 +1499,8 @@ class _$PhaseChangedImpl implements PhaseChanged {
     TResult? Function(RotationAdvanced value)? rotationAdvanced,
     TResult? Function(PhaseChanged value)? phaseChanged,
     TResult? Function(RallyEnded value)? rallyEnded,
+    TResult? Function(SetEnded value)? setEnded,
+    TResult? Function(MatchEnded value)? matchEnded,
   }) {
     return phaseChanged?.call(this);
   }
@@ -1170,6 +1514,8 @@ class _$PhaseChangedImpl implements PhaseChanged {
     TResult Function(RotationAdvanced value)? rotationAdvanced,
     TResult Function(PhaseChanged value)? phaseChanged,
     TResult Function(RallyEnded value)? rallyEnded,
+    TResult Function(SetEnded value)? setEnded,
+    TResult Function(MatchEnded value)? matchEnded,
     required TResult orElse(),
   }) {
     if (phaseChanged != null) {
@@ -1305,6 +1651,23 @@ class _$RallyEndedImpl implements RallyEnded {
     rotationAdvanced,
     required TResult Function(MatchPhase phase, int rallyId) phaseChanged,
     required TResult Function(TeamSide pointTo, int rallyId) rallyEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    setEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    matchEnded,
   }) {
     return rallyEnded(pointTo, rallyId);
   }
@@ -1319,6 +1682,23 @@ class _$RallyEndedImpl implements RallyEnded {
     TResult? Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult? Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult? Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
   }) {
     return rallyEnded?.call(pointTo, rallyId);
   }
@@ -1333,6 +1713,23 @@ class _$RallyEndedImpl implements RallyEnded {
     TResult Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
     TResult Function(MatchPhase phase, int rallyId)? phaseChanged,
     TResult Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
     required TResult orElse(),
   }) {
     if (rallyEnded != null) {
@@ -1350,6 +1747,8 @@ class _$RallyEndedImpl implements RallyEnded {
     required TResult Function(RotationAdvanced value) rotationAdvanced,
     required TResult Function(PhaseChanged value) phaseChanged,
     required TResult Function(RallyEnded value) rallyEnded,
+    required TResult Function(SetEnded value) setEnded,
+    required TResult Function(MatchEnded value) matchEnded,
   }) {
     return rallyEnded(this);
   }
@@ -1363,6 +1762,8 @@ class _$RallyEndedImpl implements RallyEnded {
     TResult? Function(RotationAdvanced value)? rotationAdvanced,
     TResult? Function(PhaseChanged value)? phaseChanged,
     TResult? Function(RallyEnded value)? rallyEnded,
+    TResult? Function(SetEnded value)? setEnded,
+    TResult? Function(MatchEnded value)? matchEnded,
   }) {
     return rallyEnded?.call(this);
   }
@@ -1376,6 +1777,8 @@ class _$RallyEndedImpl implements RallyEnded {
     TResult Function(RotationAdvanced value)? rotationAdvanced,
     TResult Function(PhaseChanged value)? phaseChanged,
     TResult Function(RallyEnded value)? rallyEnded,
+    TResult Function(SetEnded value)? setEnded,
+    TResult Function(MatchEnded value)? matchEnded,
     required TResult orElse(),
   }) {
     if (rallyEnded != null) {
@@ -1406,5 +1809,690 @@ abstract class RallyEnded implements EngineEvent {
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$RallyEndedImplCopyWith<_$RallyEndedImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$SetEndedImplCopyWith<$Res> {
+  factory _$$SetEndedImplCopyWith(
+    _$SetEndedImpl value,
+    $Res Function(_$SetEndedImpl) then,
+  ) = __$$SetEndedImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({
+    TeamSide winner,
+    int setsHome,
+    int setsAway,
+    int setNumber,
+    int finalScoreHome,
+    int finalScoreAway,
+  });
+}
+
+/// @nodoc
+class __$$SetEndedImplCopyWithImpl<$Res>
+    extends _$EngineEventCopyWithImpl<$Res, _$SetEndedImpl>
+    implements _$$SetEndedImplCopyWith<$Res> {
+  __$$SetEndedImplCopyWithImpl(
+    _$SetEndedImpl _value,
+    $Res Function(_$SetEndedImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of EngineEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? winner = null,
+    Object? setsHome = null,
+    Object? setsAway = null,
+    Object? setNumber = null,
+    Object? finalScoreHome = null,
+    Object? finalScoreAway = null,
+  }) {
+    return _then(
+      _$SetEndedImpl(
+        winner: null == winner
+            ? _value.winner
+            : winner // ignore: cast_nullable_to_non_nullable
+                  as TeamSide,
+        setsHome: null == setsHome
+            ? _value.setsHome
+            : setsHome // ignore: cast_nullable_to_non_nullable
+                  as int,
+        setsAway: null == setsAway
+            ? _value.setsAway
+            : setsAway // ignore: cast_nullable_to_non_nullable
+                  as int,
+        setNumber: null == setNumber
+            ? _value.setNumber
+            : setNumber // ignore: cast_nullable_to_non_nullable
+                  as int,
+        finalScoreHome: null == finalScoreHome
+            ? _value.finalScoreHome
+            : finalScoreHome // ignore: cast_nullable_to_non_nullable
+                  as int,
+        finalScoreAway: null == finalScoreAway
+            ? _value.finalScoreAway
+            : finalScoreAway // ignore: cast_nullable_to_non_nullable
+                  as int,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$SetEndedImpl implements SetEnded {
+  const _$SetEndedImpl({
+    required this.winner,
+    required this.setsHome,
+    required this.setsAway,
+    required this.setNumber,
+    required this.finalScoreHome,
+    required this.finalScoreAway,
+    final String? $type,
+  }) : $type = $type ?? 'setEnded';
+
+  factory _$SetEndedImpl.fromJson(Map<String, dynamic> json) =>
+      _$$SetEndedImplFromJson(json);
+
+  @override
+  final TeamSide winner;
+  @override
+  final int setsHome;
+  @override
+  final int setsAway;
+  @override
+  final int setNumber;
+  @override
+  final int finalScoreHome;
+  @override
+  final int finalScoreAway;
+
+  @JsonKey(name: 'runtimeType')
+  final String $type;
+
+  @override
+  String toString() {
+    return 'EngineEvent.setEnded(winner: $winner, setsHome: $setsHome, setsAway: $setsAway, setNumber: $setNumber, finalScoreHome: $finalScoreHome, finalScoreAway: $finalScoreAway)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SetEndedImpl &&
+            (identical(other.winner, winner) || other.winner == winner) &&
+            (identical(other.setsHome, setsHome) ||
+                other.setsHome == setsHome) &&
+            (identical(other.setsAway, setsAway) ||
+                other.setsAway == setsAway) &&
+            (identical(other.setNumber, setNumber) ||
+                other.setNumber == setNumber) &&
+            (identical(other.finalScoreHome, finalScoreHome) ||
+                other.finalScoreHome == finalScoreHome) &&
+            (identical(other.finalScoreAway, finalScoreAway) ||
+                other.finalScoreAway == finalScoreAway));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    winner,
+    setsHome,
+    setsAway,
+    setNumber,
+    finalScoreHome,
+    finalScoreAway,
+  );
+
+  /// Create a copy of EngineEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$SetEndedImplCopyWith<_$SetEndedImpl> get copyWith =>
+      __$$SetEndedImplCopyWithImpl<_$SetEndedImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(TeamSide fromSide, double durationSec)
+    serveBallFlight,
+    required TResult Function(
+      int playerId,
+      double toX,
+      double toY,
+      double durationSec,
+    )
+    playerMove,
+    required TResult Function(int home, int away) scoreChanged,
+    required TResult Function(int rotationTick, TeamSide serverSide)
+    rotationAdvanced,
+    required TResult Function(MatchPhase phase, int rallyId) phaseChanged,
+    required TResult Function(TeamSide pointTo, int rallyId) rallyEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    setEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    matchEnded,
+  }) {
+    return setEnded(
+      winner,
+      setsHome,
+      setsAway,
+      setNumber,
+      finalScoreHome,
+      finalScoreAway,
+    );
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(TeamSide fromSide, double durationSec)? serveBallFlight,
+    TResult? Function(int playerId, double toX, double toY, double durationSec)?
+    playerMove,
+    TResult? Function(int home, int away)? scoreChanged,
+    TResult? Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
+    TResult? Function(MatchPhase phase, int rallyId)? phaseChanged,
+    TResult? Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
+  }) {
+    return setEnded?.call(
+      winner,
+      setsHome,
+      setsAway,
+      setNumber,
+      finalScoreHome,
+      finalScoreAway,
+    );
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(TeamSide fromSide, double durationSec)? serveBallFlight,
+    TResult Function(int playerId, double toX, double toY, double durationSec)?
+    playerMove,
+    TResult Function(int home, int away)? scoreChanged,
+    TResult Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
+    TResult Function(MatchPhase phase, int rallyId)? phaseChanged,
+    TResult Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
+    required TResult orElse(),
+  }) {
+    if (setEnded != null) {
+      return setEnded(
+        winner,
+        setsHome,
+        setsAway,
+        setNumber,
+        finalScoreHome,
+        finalScoreAway,
+      );
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(ServeBallFlight value) serveBallFlight,
+    required TResult Function(PlayerMove value) playerMove,
+    required TResult Function(ScoreChanged value) scoreChanged,
+    required TResult Function(RotationAdvanced value) rotationAdvanced,
+    required TResult Function(PhaseChanged value) phaseChanged,
+    required TResult Function(RallyEnded value) rallyEnded,
+    required TResult Function(SetEnded value) setEnded,
+    required TResult Function(MatchEnded value) matchEnded,
+  }) {
+    return setEnded(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(ServeBallFlight value)? serveBallFlight,
+    TResult? Function(PlayerMove value)? playerMove,
+    TResult? Function(ScoreChanged value)? scoreChanged,
+    TResult? Function(RotationAdvanced value)? rotationAdvanced,
+    TResult? Function(PhaseChanged value)? phaseChanged,
+    TResult? Function(RallyEnded value)? rallyEnded,
+    TResult? Function(SetEnded value)? setEnded,
+    TResult? Function(MatchEnded value)? matchEnded,
+  }) {
+    return setEnded?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(ServeBallFlight value)? serveBallFlight,
+    TResult Function(PlayerMove value)? playerMove,
+    TResult Function(ScoreChanged value)? scoreChanged,
+    TResult Function(RotationAdvanced value)? rotationAdvanced,
+    TResult Function(PhaseChanged value)? phaseChanged,
+    TResult Function(RallyEnded value)? rallyEnded,
+    TResult Function(SetEnded value)? setEnded,
+    TResult Function(MatchEnded value)? matchEnded,
+    required TResult orElse(),
+  }) {
+    if (setEnded != null) {
+      return setEnded(this);
+    }
+    return orElse();
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$SetEndedImplToJson(this);
+  }
+}
+
+abstract class SetEnded implements EngineEvent {
+  const factory SetEnded({
+    required final TeamSide winner,
+    required final int setsHome,
+    required final int setsAway,
+    required final int setNumber,
+    required final int finalScoreHome,
+    required final int finalScoreAway,
+  }) = _$SetEndedImpl;
+
+  factory SetEnded.fromJson(Map<String, dynamic> json) =
+      _$SetEndedImpl.fromJson;
+
+  TeamSide get winner;
+  int get setsHome;
+  int get setsAway;
+  int get setNumber;
+  int get finalScoreHome;
+  int get finalScoreAway;
+
+  /// Create a copy of EngineEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$SetEndedImplCopyWith<_$SetEndedImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$MatchEndedImplCopyWith<$Res> {
+  factory _$$MatchEndedImplCopyWith(
+    _$MatchEndedImpl value,
+    $Res Function(_$MatchEndedImpl) then,
+  ) = __$$MatchEndedImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({
+    TeamSide winner,
+    int setsHome,
+    int setsAway,
+    int finalScoreHome,
+    int finalScoreAway,
+  });
+}
+
+/// @nodoc
+class __$$MatchEndedImplCopyWithImpl<$Res>
+    extends _$EngineEventCopyWithImpl<$Res, _$MatchEndedImpl>
+    implements _$$MatchEndedImplCopyWith<$Res> {
+  __$$MatchEndedImplCopyWithImpl(
+    _$MatchEndedImpl _value,
+    $Res Function(_$MatchEndedImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of EngineEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? winner = null,
+    Object? setsHome = null,
+    Object? setsAway = null,
+    Object? finalScoreHome = null,
+    Object? finalScoreAway = null,
+  }) {
+    return _then(
+      _$MatchEndedImpl(
+        winner: null == winner
+            ? _value.winner
+            : winner // ignore: cast_nullable_to_non_nullable
+                  as TeamSide,
+        setsHome: null == setsHome
+            ? _value.setsHome
+            : setsHome // ignore: cast_nullable_to_non_nullable
+                  as int,
+        setsAway: null == setsAway
+            ? _value.setsAway
+            : setsAway // ignore: cast_nullable_to_non_nullable
+                  as int,
+        finalScoreHome: null == finalScoreHome
+            ? _value.finalScoreHome
+            : finalScoreHome // ignore: cast_nullable_to_non_nullable
+                  as int,
+        finalScoreAway: null == finalScoreAway
+            ? _value.finalScoreAway
+            : finalScoreAway // ignore: cast_nullable_to_non_nullable
+                  as int,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$MatchEndedImpl implements MatchEnded {
+  const _$MatchEndedImpl({
+    required this.winner,
+    required this.setsHome,
+    required this.setsAway,
+    required this.finalScoreHome,
+    required this.finalScoreAway,
+    final String? $type,
+  }) : $type = $type ?? 'matchEnded';
+
+  factory _$MatchEndedImpl.fromJson(Map<String, dynamic> json) =>
+      _$$MatchEndedImplFromJson(json);
+
+  @override
+  final TeamSide winner;
+  @override
+  final int setsHome;
+  @override
+  final int setsAway;
+  @override
+  final int finalScoreHome;
+  @override
+  final int finalScoreAway;
+
+  @JsonKey(name: 'runtimeType')
+  final String $type;
+
+  @override
+  String toString() {
+    return 'EngineEvent.matchEnded(winner: $winner, setsHome: $setsHome, setsAway: $setsAway, finalScoreHome: $finalScoreHome, finalScoreAway: $finalScoreAway)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$MatchEndedImpl &&
+            (identical(other.winner, winner) || other.winner == winner) &&
+            (identical(other.setsHome, setsHome) ||
+                other.setsHome == setsHome) &&
+            (identical(other.setsAway, setsAway) ||
+                other.setsAway == setsAway) &&
+            (identical(other.finalScoreHome, finalScoreHome) ||
+                other.finalScoreHome == finalScoreHome) &&
+            (identical(other.finalScoreAway, finalScoreAway) ||
+                other.finalScoreAway == finalScoreAway));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    winner,
+    setsHome,
+    setsAway,
+    finalScoreHome,
+    finalScoreAway,
+  );
+
+  /// Create a copy of EngineEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$MatchEndedImplCopyWith<_$MatchEndedImpl> get copyWith =>
+      __$$MatchEndedImplCopyWithImpl<_$MatchEndedImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(TeamSide fromSide, double durationSec)
+    serveBallFlight,
+    required TResult Function(
+      int playerId,
+      double toX,
+      double toY,
+      double durationSec,
+    )
+    playerMove,
+    required TResult Function(int home, int away) scoreChanged,
+    required TResult Function(int rotationTick, TeamSide serverSide)
+    rotationAdvanced,
+    required TResult Function(MatchPhase phase, int rallyId) phaseChanged,
+    required TResult Function(TeamSide pointTo, int rallyId) rallyEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    setEnded,
+    required TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )
+    matchEnded,
+  }) {
+    return matchEnded(
+      winner,
+      setsHome,
+      setsAway,
+      finalScoreHome,
+      finalScoreAway,
+    );
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(TeamSide fromSide, double durationSec)? serveBallFlight,
+    TResult? Function(int playerId, double toX, double toY, double durationSec)?
+    playerMove,
+    TResult? Function(int home, int away)? scoreChanged,
+    TResult? Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
+    TResult? Function(MatchPhase phase, int rallyId)? phaseChanged,
+    TResult? Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult? Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
+  }) {
+    return matchEnded?.call(
+      winner,
+      setsHome,
+      setsAway,
+      finalScoreHome,
+      finalScoreAway,
+    );
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(TeamSide fromSide, double durationSec)? serveBallFlight,
+    TResult Function(int playerId, double toX, double toY, double durationSec)?
+    playerMove,
+    TResult Function(int home, int away)? scoreChanged,
+    TResult Function(int rotationTick, TeamSide serverSide)? rotationAdvanced,
+    TResult Function(MatchPhase phase, int rallyId)? phaseChanged,
+    TResult Function(TeamSide pointTo, int rallyId)? rallyEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int setNumber,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    setEnded,
+    TResult Function(
+      TeamSide winner,
+      int setsHome,
+      int setsAway,
+      int finalScoreHome,
+      int finalScoreAway,
+    )?
+    matchEnded,
+    required TResult orElse(),
+  }) {
+    if (matchEnded != null) {
+      return matchEnded(
+        winner,
+        setsHome,
+        setsAway,
+        finalScoreHome,
+        finalScoreAway,
+      );
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(ServeBallFlight value) serveBallFlight,
+    required TResult Function(PlayerMove value) playerMove,
+    required TResult Function(ScoreChanged value) scoreChanged,
+    required TResult Function(RotationAdvanced value) rotationAdvanced,
+    required TResult Function(PhaseChanged value) phaseChanged,
+    required TResult Function(RallyEnded value) rallyEnded,
+    required TResult Function(SetEnded value) setEnded,
+    required TResult Function(MatchEnded value) matchEnded,
+  }) {
+    return matchEnded(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(ServeBallFlight value)? serveBallFlight,
+    TResult? Function(PlayerMove value)? playerMove,
+    TResult? Function(ScoreChanged value)? scoreChanged,
+    TResult? Function(RotationAdvanced value)? rotationAdvanced,
+    TResult? Function(PhaseChanged value)? phaseChanged,
+    TResult? Function(RallyEnded value)? rallyEnded,
+    TResult? Function(SetEnded value)? setEnded,
+    TResult? Function(MatchEnded value)? matchEnded,
+  }) {
+    return matchEnded?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(ServeBallFlight value)? serveBallFlight,
+    TResult Function(PlayerMove value)? playerMove,
+    TResult Function(ScoreChanged value)? scoreChanged,
+    TResult Function(RotationAdvanced value)? rotationAdvanced,
+    TResult Function(PhaseChanged value)? phaseChanged,
+    TResult Function(RallyEnded value)? rallyEnded,
+    TResult Function(SetEnded value)? setEnded,
+    TResult Function(MatchEnded value)? matchEnded,
+    required TResult orElse(),
+  }) {
+    if (matchEnded != null) {
+      return matchEnded(this);
+    }
+    return orElse();
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$MatchEndedImplToJson(this);
+  }
+}
+
+abstract class MatchEnded implements EngineEvent {
+  const factory MatchEnded({
+    required final TeamSide winner,
+    required final int setsHome,
+    required final int setsAway,
+    required final int finalScoreHome,
+    required final int finalScoreAway,
+  }) = _$MatchEndedImpl;
+
+  factory MatchEnded.fromJson(Map<String, dynamic> json) =
+      _$MatchEndedImpl.fromJson;
+
+  TeamSide get winner;
+  int get setsHome;
+  int get setsAway;
+  int get finalScoreHome;
+  int get finalScoreAway;
+
+  /// Create a copy of EngineEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$MatchEndedImplCopyWith<_$MatchEndedImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

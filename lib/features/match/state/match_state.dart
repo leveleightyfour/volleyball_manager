@@ -6,12 +6,13 @@ part 'match_state.g.dart';
 enum TeamSide { home, away }
 
 enum MatchPhase {
-  preServe, // choose server/receiver
-  serve, // ball in flight on serve
+  preServe,  // choose server/receiver
+  serve,     // ball in flight on serve
   reception, // pass result processed
-  setting, // setting/choice
-  attack, // attack resolution
-  rallyEnd, // rally concluded (score/rotation handled)
+  setting,   // setting/choice
+  attack,    // attack resolution
+  dig,       // transition touch — defending team plays a dug/deflected ball
+  rallyEnd,  // rally concluded (score/rotation handled)
 }
 
 @freezed
@@ -29,6 +30,10 @@ class MatchState with _$MatchState {
     required TeamSide serverSide, // current server’s team
     required Score score,
     required MatchPhase phase,
+    @Default(0) int setsHome,
+    @Default(0) int setsAway,
+    @Default(1) int setNumber, // 1–5
+    @Default(false) bool isMatchOver,
   }) = _MatchState;
 
   factory MatchState.initial({TeamSide firstServer = TeamSide.home}) =>

@@ -1,0 +1,14 @@
+{
+  "triple_block_bonus": 1.20,
+  "transition": {
+    "single_option_above": 4.0,
+    "average_above": 1.0,
+    "perfect_below": -2.0
+  },
+  "blocker_read": {
+    "mb_base_prob": 0.30,
+    "mb_skill_factor": 0.03,
+    "wing_base_prob": 0.25,
+    "wing_skill_factor": 0.02
+  }
+}
